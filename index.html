@@ -187,6 +187,12 @@
         <p class="blocker-pc-hint" style="font-size: 14px; color: #aaa;">[左クリック]: 破壊 | [右クリック]: 設置</p>
         <p class="blocker-pc-hint" style="font-size: 14px; color: #ffaa00;">[E]: インベントリを開く</p>
         <p id="blocker-touch-hint" style="display:none; margin-top: 20px; font-size: 14px; color: #aaa; line-height:1.6;">左下のスティックで移動<br>画面をドラッグで視点操作<br>右下のボタンで ジャンプ・破壊・設置</p>
+        <p style="margin-top: 24px; font-size: 11px; color: #999; max-width: 480px; line-height: 1.6; padding: 0 16px; text-align: center;">
+            【お知らせとお願い】<br>
+            当サイトは、個人のプログラミング学習および技術研究を目的として作成されたテストページです。<br>
+            『マインクラフト（Minecraft）』の開発者様や関係者様に不利益を与える意図、および権利を侵害する目的は一切ございません。<br>
+            一般に向けた公開を想定したものではないため、偶然アクセスされた方は、恐れ入りますが速やかに当サイトからご退室（ブラウザのタブを閉じる等）いただきますようお願い申し上げます。
+        </p>
     </div>
     <div id="ui-layer">
         <div id="info-panel">
@@ -874,7 +880,9 @@
         let isLocked = false;
         let cameraYaw = 0; let cameraPitch = 0;
         // スマホ・iPadなどタッチデバイスかどうか(PC操作には一切影響しない判定用フラグ)
-        const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        // Chromebook(クロームブック)はタッチスクリーン搭載機でも判定が漏れる場合があるため、
+        // User-Agentの"CrOS"表記も合わせて判定し、タッチ操作・画面ボタンを確実に使えるようにする
+        const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || /CrOS/i.test(navigator.userAgent || '');
         function lockPointer() {
             if (!isInventoryOpen) {
                 if (isTouchDevice) {
@@ -1066,6 +1074,23 @@
             };
             joystickZone.addEventListener('touchend', joystickEnd, { passive: false });
             joystickZone.addEventListener('touchcancel', joystickEnd, { passive: false });
+            // クロームブックなど、タッチスクリーンがなくマウス/トラックパッドしかない端末でも
+            // 同じジョイスティックをドラッグ操作できるようにする(タッチ操作のロジックには一切影響しない)
+            let joystickMouseActive = false;
+            joystickZone.addEventListener('mousedown', (event) => {
+                event.stopPropagation(); event.preventDefault();
+                joystickMouseActive = true;
+                updateJoystick(event);
+            });
+            document.addEventListener('mousemove', (event) => {
+                if (!joystickMouseActive) return;
+                updateJoystick(event);
+            });
+            document.addEventListener('mouseup', () => {
+                if (!joystickMouseActive) return;
+                joystickMouseActive = false;
+                resetJoystick();
+            });
         }
         // --- 画面を指でドラッグして視点操作(PCのmousemoveと同じ式をタッチ差分で計算) ---
         // ジョイスティックやボタン上のタッチはそれぞれのハンドラでstopPropagation()しているため、
@@ -1075,9 +1100,15 @@
             if (!isLocked) return;
             if (lookTouchId !== null) return;
             const touch = event.changedTouches[0];
+            // ホットバー(タップして持ちアイテムを選択する)は従来通り合成クリックに任せるため、
+            // ホットバー上で始まったタッチは視点操作の対象にしない(素通りさせる)
+            if (touch.target && touch.target.closest && touch.target.closest('#hotbar-container')) return;
             lookTouchId = touch.identifier;
             lastTouchX = touch.clientX; lastTouchY = touch.clientY;
-        }, { passive: true });
+            // ここでpreventDefault()しておかないと、タッチ終了後にブラウザが合成のmousedown/clickを
+            // 発生させてしまい、視点操作のためにタップしただけでブロックを破壊してしまう不具合が起きる
+            event.preventDefault();
+        }, { passive: false });
         document.addEventListener('touchmove', (event) => {
             if (!isLocked || lookTouchId === null) return;
             for (const touch of event.changedTouches) {
@@ -1097,11 +1128,15 @@
         }, { passive: false });
         function releaseLookTouch(event) {
             for (const touch of event.changedTouches) {
-                if (touch.identifier === lookTouchId) { lookTouchId = null; break; }
+                if (touch.identifier === lookTouchId) {
+                    lookTouchId = null;
+                    event.preventDefault(); // 合成クリックによる誤破壊を防ぐ
+                    break;
+                }
             }
         }
-        document.addEventListener('touchend', releaseLookTouch, { passive: true });
-        document.addEventListener('touchcancel', releaseLookTouch, { passive: true });
+        document.addEventListener('touchend', releaseLookTouch, { passive: false });
+        document.addEventListener('touchcancel', releaseLookTouch, { passive: false });
         // --- アクションボタン(ジャンプ/破壊/設置/インベントリ/視点切替/リスポーン) ---
         function bindMobileButton(id, onDown, onUp) {
             const el = document.getElementById(id);
@@ -1116,11 +1151,29 @@
             };
             el.addEventListener('touchend', upHandler, { passive: false });
             el.addEventListener('touchcancel', upHandler, { passive: false });
+            // クロームブックなど、タッチではなくマウス/トラックパッドしかない端末でも
+            // 同じボタンをクリックで操作できるようにする(タッチ操作のロジックには一切影響しない)
+            el.addEventListener('mousedown', (event) => {
+                event.stopPropagation(); event.preventDefault();
+                if (onDown) onDown(event);
+            });
+            el.addEventListener('mouseup', (event) => {
+                event.stopPropagation(); event.preventDefault();
+                if (onUp) onUp(event);
+            });
+            el.addEventListener('mouseleave', (event) => {
+                // ボタンを押したままカーソルが外に出た場合も、押しっぱなしにならないよう解除する
+                if (onUp) onUp(event);
+            });
         }
         bindMobileButton('mobile-btn-jump', () => {
             if (currentRidingCart) { exitMinecart(); return; }
             moveUp = true;
-            if (canJump && !isFlying) { velocity.y += 10; canJump = false; }
+            // PCの[Space]連打と全く同じロジック(lastSpacePress/isFlying)を流用し、
+            // 2回連続タップで浮遊状態のON/OFFを切り替える(ONの間は押している間だけ上昇する)
+            const now = performance.now();
+            if (now - lastSpacePress < 500) { isFlying = !isFlying; if (isFlying) velocity.y = 0; lastSpacePress = 0; }
+            else { lastSpacePress = now; if (canJump && !isFlying) { velocity.y += 10; canJump = false; } }
         }, () => { moveUp = false; });
         bindMobileButton('mobile-btn-break', () => { handlePointerAction({ button: 0 }); });
         bindMobileButton('mobile-btn-place', () => { handlePointerAction({ button: 2 }); });
