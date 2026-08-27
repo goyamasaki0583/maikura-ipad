@@ -971,7 +971,21 @@
         }
         updateCameraView();
         const blocker = document.getElementById('blocker');
-        blocker.addEventListener('click', lockPointer);
+        // iPad・スマホでプレイを開始する瞬間に、ブラウザのアドレスバー等を隠した
+        // 最大化(フルスクリーン)表示になるようにする。PC(タッチデバイスでない場合)は何もしない。
+        // 対応していない端末(iPhoneのSafari等)では何も起きないだけで、エラーにはならない。
+        function requestFullscreenIfTouch() {
+            if (!isTouchDevice) return;
+            if (document.fullscreenElement || document.webkitFullscreenElement) return;
+            const el = document.documentElement;
+            const reqFs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+            if (!reqFs) return;
+            try {
+                const result = reqFs.call(el);
+                if (result && typeof result.catch === 'function') result.catch(() => {});
+            } catch (e) {}
+        }
+        blocker.addEventListener('click', () => { requestFullscreenIfTouch(); lockPointer(); });
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
         let canJump = false, isFlying = false, moveUp = false, moveDown = false;
         let lastSpacePress = 0; const velocity = new THREE.Vector3(); const direction = new THREE.Vector3();
@@ -1038,7 +1052,7 @@
             const controlsPanel = document.getElementById('controls-panel');
             if (controlsPanel) controlsPanel.style.display = 'none';
             // 一部のモバイルブラウザ向けの保険: clickが発火しない場合でも確実に開始できるようにする
-            blocker.addEventListener('touchend', (event) => { event.preventDefault(); lockPointer(); }, { passive: false });
+            blocker.addEventListener('touchend', (event) => { event.preventDefault(); requestFullscreenIfTouch(); lockPointer(); }, { passive: false });
         }
         // --- 仮想ジョイスティック(WASDと同じ moveForward 等の真偽値を動かすだけ) ---
         const joystickZone = document.getElementById('mobile-joystick-zone');
