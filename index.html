@@ -2666,7 +2666,7 @@
                 animal.position.copy(pos);
 
                 // 猫・犬は、歩いていない(止まっている)時は常にプレイヤーの方を向くようにする
-                // (ランダムな徘徊の向き決定より後にここで上書きすることで、確実にプレイヤー方向を向かせる)
+                // (ランダムな徘徊の向き決定より後にここで上書きすることで、確実にプレイヤー方かせる)
                 if ((data.isCat || data.isDog) && !data.isWalking) {
                     const toPlayerX = playerGroup.position.x - animal.position.x;
                     const toPlayerZ = playerGroup.position.z - animal.position.z;
