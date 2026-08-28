@@ -79,6 +79,12 @@
         .inv-header { display: flex; justify-content: space-between; align-items: center; }
         .inv-title { font-size: 18px; font-weight: bold; color: #333; }
         .inv-item-name-box { font-size: 16px; color: #fff; background: #333; padding: 4px 10px; border-radius: 4px; min-width: 150px; text-align: center; border: 2px inset #000; }
+        .inv-close-btn {
+            font-family: 'Courier New', Courier, monospace; font-size: 14px; font-weight: bold; cursor: pointer;
+            padding: 6px 14px; border: 3px solid; border-color: #fff #555 #555 #fff; border-radius: 4px;
+            background-color: #8b8b8b; color: #fff; touch-action: none; -webkit-tap-highlight-color: transparent;
+        }
+        .inv-close-btn:hover { background-color: #a0a0a0; }
 
         .inv-grid {
             display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px;
@@ -138,7 +144,9 @@
             pointer-events: none;
         }
         #mobile-top-buttons {
-            position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; pointer-events: auto;
+            /* 左上は座標表示(#info-panel)と重なってしまうため、PCでは非表示になる
+               #controls-panelと同じ右上に配置して重ならないようにする */
+            position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; pointer-events: auto;
         }
         #mobile-action-buttons {
             position: absolute; right: 20px; bottom: 22px; display: flex; flex-direction: column;
@@ -209,6 +217,7 @@
                 <div class="inv-header">
                     <div class="inv-title">アイテム一覧</div>
                     <div class="inv-item-name-box" id="inv-item-name">アイテム名</div>
+                    <button id="inv-close-btn" class="inv-close-btn" title="閉じる">閉じる ✕</button>
                 </div>
                 <div class="inv-grid" id="inv-grid"></div>
                 <div style="font-size: 12px; color: #555; margin-top: 5px; text-align: center;">[十字キー]で選択 / [Enter]でホットバーに追加 / [E]で閉じる</div>
@@ -623,6 +632,14 @@
                 slot.addEventListener('click', () => {
                     if (!isInventoryOpen) { currentSlotIndex = i; updateHotbarSelection(); }
                 });
+                // タッチデバイスでは、ここでpreventDefault/stopPropagationしておかないと
+                // タップ後にブラウザが合成のmousedownイベントを発生させてしまい、それが
+                // document側の破壊/設置ハンドラ(handlePointerAction)まで届いて
+                // 「アイテムを選んだだけなのに正面のブロックを壊してしまう」不具合になる。
+                slot.addEventListener('touchstart', (event) => {
+                    event.stopPropagation(); event.preventDefault();
+                    if (!isInventoryOpen) { currentSlotIndex = i; updateHotbarSelection(); }
+                }, { passive: false });
                 hotbarContainer.appendChild(slot);
             }
         }
@@ -689,6 +706,14 @@
                 currentInvTab = e.target.dataset.tab; invFocusedIndex = 0; renderInventoryGrid();
             });
         });
+        const invCloseBtn = document.getElementById('inv-close-btn');
+        invCloseBtn.addEventListener('click', () => {
+            if (isInventoryOpen) toggleInventory();
+        });
+        invCloseBtn.addEventListener('touchstart', (event) => {
+            event.stopPropagation(); event.preventDefault();
+            if (isInventoryOpen) toggleInventory();
+        }, { passive: false });
         const activeBlocks = new Map();
         const blockMeshes = [];
         // ドア(開閉判定)だけを毎フレーム調べられるようにする専用リスト。
@@ -1056,7 +1081,17 @@
         bindMobileButton('mobile-btn-jump', () => {
             if (currentRidingCart) { exitMinecart(); return; }
             moveUp = true;
-            if (canJump && !isFlying) { velocity.y += 10; canJump = false; }
+            // PCの[Space]キーと同じダブルタップ判定(0.5秒以内の連打で飛行モードON/OFFを切り替える)を
+            // ジャンプボタンにもそのまま流用する。lastSpacePressはPC用キーボード処理と共有している。
+            const now = performance.now();
+            if (now - lastSpacePress < 500) {
+                isFlying = !isFlying;
+                if (isFlying) velocity.y = 0;
+                lastSpacePress = 0;
+            } else {
+                lastSpacePress = now;
+                if (canJump && !isFlying) { velocity.y += 10; canJump = false; }
+            }
         }, () => { moveUp = false; });
         bindMobileButton('mobile-btn-break', () => { handlePointerAction({ button: 0 }); });
         bindMobileButton('mobile-btn-place', () => { handlePointerAction({ button: 2 }); });
