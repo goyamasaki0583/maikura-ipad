@@ -1148,37 +1148,63 @@
                 mesh.userData.parts.cne.visible = showCNE;
                 mesh.userData.parts.csw.visible = showCSW;
                 mesh.userData.parts.cse.visible = showCSE;
+                // 段差レール(斜め接続)の見た目を使わない場合は、必ず初期状態(位置・拡大縮小なし)に戻す。
+                // これをしないと、一度斜めレールとして描画されたパーツが、通常のレールに戻った後も
+                // ズレた位置・伸びた長さのまま残ってしまう。
+                mesh.userData.parts.sz.position.set(0, 0, 0);
+                mesh.userData.parts.sz.scale.set(1, 1, 1);
+                mesh.userData.parts.sx.position.set(0, 0, 0);
+                mesh.userData.parts.sx.scale.set(1, 1, 1);
             }
             mesh.rotation.y = 0;
             mesh.rotation.x = 0;
             mesh.rotation.z = 0;
-            // 同じ高さに繋がる隣接レールが無い場合だけ、1段上/下にあるレールへ向けて斜めに傾ける。
-            // これにより、高さの違う2つの足場をレール1本で斜めに立てかけて繋げられるようにする。
-            // (同じ高さの隣接がある通常の直線・カーブ・交差の見た目にはまったく影響しない)
-            if (count === 0 && mesh.userData.parts) {
-                const TILT_ANGLE = Math.PI / 5.5; // 約33度
+            // 1段上にあるレールへ向けて、斜めに立てかけて繋げる(上りスロープ)。
+            // 本物のマインクラフトと同じく、上りスロープは「完全に孤立しているレール」だけでなく、
+            // 「反対側は地面などに平らに1本繋がっていて、もう片方の端だけ1段上に上る」レールでも成立する
+            // (例: 地面を這うまっすぐなレールの続きが、階段の下から1段目に上っていく場合など)。
+            // そのため、同じ高さの隣接が0本(完全孤立)、または1本(片側だけ平らに繋がっている)の場合に判定する。
+            // ただし、既に平らな隣接がある向き(軸)と違う軸へ上ることはできない(レール1本はまっすぐか
+            // カーブのどちらか一方の形しか取れないため)。
+            if ((count === 0 || count === 1) && mesh.userData.parts) {
+                const TILT_ANGLE = Math.PI / 4; // 段差1マスにつき45度(水平1マス・垂直1マスの斜面と一致する角度)
+                const STRETCH = Math.SQRT2; // 斜めになった分だけレール自体を伸ばし、上下のレールにすき間なく届かせる
+                // レールは通常 y=-0.4 の高さに置かれている。原点(マス中心)を軸に回転させると、
+                // その -0.4 のオフセットごと回転してしまうため、回転後にちょうど「自分のマスの端の高さ(-0.4)」から
+                // 「隣のマス(1段上)のレールの高さ(+0.6)」まで届くよう、あらかじめ計算した分だけ位置を補正する。
+                const Y_OFFSET = 0.1 + 0.4 * Math.cos(TILT_ANGLE);
+                const PERP_OFFSET = 0.4 * Math.sin(TILT_ANGLE);
                 const diagDirs = [
                     { dx: 0, dz: -1, axis: 'x', coeff: 1 },  // 北
                     { dx: 0, dz: 1, axis: 'x', coeff: -1 },  // 南
                     { dx: -1, dz: 0, axis: 'z', coeff: -1 }, // 西
                     { dx: 1, dz: 0, axis: 'z', coeff: 1 }    // 東
                 ];
+                // count===1の場合は、既に平らに繋がっている向きの軸(sz=南北 / sx=東西)としか
+                // 上りスロープを両立できないので、その軸だけに絞り込む。
+                const requiredAxis = count === 1 ? (showSZ ? 'x' : 'z') : null;
                 for (const d of diagDirs) {
-                    let heightSign = 0;
-                    if (isRail(x + d.dx, y + 1, z + d.dz)) heightSign = 1;
-                    else if (isRail(x + d.dx, y - 1, z + d.dz)) heightSign = -1;
-                    if (heightSign !== 0) {
-                        if (d.axis === 'x') {
-                            mesh.userData.parts.sz.visible = true;
-                            mesh.userData.parts.sx.visible = false;
-                            mesh.rotation.x = heightSign * d.coeff * TILT_ANGLE;
-                        } else {
-                            mesh.userData.parts.sx.visible = true;
-                            mesh.userData.parts.sz.visible = false;
-                            mesh.rotation.z = heightSign * d.coeff * TILT_ANGLE;
-                        }
-                        break;
+                    if (requiredAxis && d.axis !== requiredAxis) continue;
+                    // 同じ高さに既にレールがある向きは、そのままの平らな接続を優先する(上りスロープにしない)。
+                    if (isRail(x + d.dx, y, z + d.dz)) continue;
+                    // 1段上にレールがある場合だけ、このレールを「上りスロープ」にする。
+                    // 1段下にレールがある場合(=自分は段差の上側)は、平らなレールのまま何もしない。
+                    if (!isRail(x + d.dx, y + 1, z + d.dz)) continue;
+                    const s = d.coeff;
+                    if (d.axis === 'x') {
+                        mesh.userData.parts.sz.visible = true;
+                        mesh.userData.parts.sx.visible = false;
+                        mesh.rotation.x = s * TILT_ANGLE;
+                        mesh.userData.parts.sz.scale.set(1, 1, STRETCH);
+                        mesh.userData.parts.sz.position.set(0, Y_OFFSET, PERP_OFFSET * s);
+                    } else {
+                        mesh.userData.parts.sx.visible = true;
+                        mesh.userData.parts.sz.visible = false;
+                        mesh.rotation.z = s * TILT_ANGLE;
+                        mesh.userData.parts.sx.scale.set(STRETCH, 1, 1);
+                        mesh.userData.parts.sx.position.set(-PERP_OFFSET * s, Y_OFFSET, 0);
                     }
+                    break;
                 }
             }
         }
@@ -1753,6 +1779,23 @@
             fishes.push(fishGroup);
         }
         // ==================== トロッコ(レール専用の乗り物) ====================
+        function createMinecartBodyMaterial() {
+            // 本家Minecraftのトロッコを意識した、石っぽいまだら模様のボディ用テクスチャ
+            const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#8f8f8f'; ctx.fillRect(0, 0, 32, 32);
+            ctx.fillStyle = 'rgba(0,0,0,0.18)';
+            for (let i = 0; i < 26; i++) {
+                ctx.fillRect(Math.random() * 32, Math.random() * 32, Math.random() * 4 + 2, Math.random() * 4 + 2);
+            }
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            for (let i = 0; i < 14; i++) {
+                ctx.fillRect(Math.random() * 32, Math.random() * 32, Math.random() * 3 + 1, Math.random() * 3 + 1);
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+            return new THREE.MeshLambertMaterial({ map: tex });
+        }
         function spawnMinecart(x, y, z) {
             const group = new THREE.Group();
             group.position.set(x, y, z);
@@ -1763,23 +1806,41 @@
             group.userData.riding = false;
             group.userData.promptDismissed = false;
 
-            const cartMat = new THREE.MeshLambertMaterial({ color: 0x5a4632 });
-            const metalMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            // 見た目を本家Minecraftのトロッコに寄せたデザイン(石っぽいボディ + 上縁の明るいフチ +
+            // 四隅から外側に張り出す暗いフレーム脚)。レール移動・乗車判定などの挙動には一切手を加えていない。
+            const cartMat = createMinecartBodyMaterial();
+            const rimMat = new THREE.MeshLambertMaterial({ color: 0xd4d4d4 });
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x45495a });
+            const footMat = new THREE.MeshLambertMaterial({ color: 0x232323 });
             const baseY = -0.35; // レールのマス(セル下寄り)に合わせて低めに配置
 
-            const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.6), cartMat); bottom.position.set(0, baseY, 0);
+            const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.6), floorMat); bottom.position.set(0, baseY, 0);
             const wallFront = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.08), cartMat); wallFront.position.set(0, baseY + 0.2, 0.3);
             const wallBack = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.08), cartMat); wallBack.position.set(0, baseY + 0.2, -0.3);
             const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.6), cartMat); wallLeft.position.set(0.4, baseY + 0.2, 0);
             const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.6), cartMat); wallRight.position.set(-0.4, baseY + 0.2, 0);
             group.add(bottom, wallFront, wallBack, wallLeft, wallRight);
 
-            const wheelGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.06, 8);
-            [{x:0.35,z:0.22}, {x:-0.35,z:0.22}, {x:0.35,z:-0.22}, {x:-0.35,z:-0.22}].forEach(wp => {
-                const wheel = new THREE.Mesh(wheelGeo, metalMat);
-                wheel.rotation.x = Math.PI / 2;
-                wheel.position.set(wp.x, baseY - 0.05, wp.z);
-                group.add(wheel);
+            // 壁の上端に明るいフチを付ける
+            const rimTopY = baseY + 0.375;
+            const rimFront = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.05, 0.1), rimMat); rimFront.position.set(0, rimTopY, 0.3);
+            const rimBack = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.05, 0.1), rimMat); rimBack.position.set(0, rimTopY, -0.3);
+            const rimLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.64), rimMat); rimLeft.position.set(0.4, rimTopY, 0);
+            const rimRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.64), rimMat); rimRight.position.set(-0.4, rimTopY, 0);
+            group.add(rimFront, rimBack, rimLeft, rimRight);
+
+            // 四隅から外側・下方向へ張り出す暗いフレーム脚(本家トロッコの特徴的な脚)
+            const footGeo = new THREE.BoxGeometry(0.12, 0.22, 0.12);
+            [
+                { x: 0.42, z: 0.32, rz: -0.35 },
+                { x: -0.42, z: 0.32, rz: 0.35 },
+                { x: 0.42, z: -0.32, rz: -0.35 },
+                { x: -0.42, z: -0.32, rz: 0.35 },
+            ].forEach(fp => {
+                const foot = new THREE.Mesh(footGeo, footMat);
+                foot.position.set(fp.x, baseY - 0.16, fp.z);
+                foot.rotation.z = fp.rz;
+                group.add(foot);
             });
 
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.7), invisibleHitboxMat);
@@ -1850,7 +1911,7 @@
                     if (moveForward || moveBackward) tryStartMinecartMove(cart, data.dir);
                 }
             }
-            playerGroup.position.set(cart.position.x, cart.position.y + 0.9, cart.position.z);
+            playerGroup.position.set(cart.position.x, cart.position.y - 0.75, cart.position.z);
         }
         function checkMinecartProximity() {
             if (currentRidingCart || isCartPromptOpen || isInventoryOpen || isRespawnPromptOpen) return;
@@ -2566,13 +2627,20 @@
                     }
                 }
                 const currentSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-                if (canJump && !isInWater) {
+                if (currentRidingCart) {
+                    // トロッコに乗車中は下半身(脚)をトロッコの中に隠し、上半身だけが見えるようにする
+                    rightLegPivot.visible = false; leftLegPivot.visible = false;
+                    rightArmPivot.rotation.x = 0.3; leftArmPivot.rotation.x = 0.3;
+                    rightArmPivot.rotation.z = -0.15; leftArmPivot.rotation.z = 0.15;
+                } else if (canJump && !isInWater) {
+                    rightLegPivot.visible = true; leftLegPivot.visible = true;
                     if (currentSpeed > 2.0) {
                         const angle = Math.sin((time / 1000) * 12) * 0.8;
                         rightArmPivot.rotation.x = angle; leftArmPivot.rotation.x = -angle; rightLegPivot.rotation.x = -angle; leftLegPivot.rotation.x = angle;
                     } else { rightArmPivot.rotation.x = 0; leftArmPivot.rotation.x = 0; rightLegPivot.rotation.x = 0; leftLegPivot.rotation.x = 0; }
                     rightArmPivot.rotation.z = 0; leftArmPivot.rotation.z = 0;
                 } else {
+                    rightLegPivot.visible = true; leftLegPivot.visible = true;
                     rightArmPivot.rotation.x = 0.5; leftArmPivot.rotation.x = 0.5; rightArmPivot.rotation.z = -0.2; leftArmPivot.rotation.z = 0.2;
                     rightLegPivot.rotation.x = -0.2; leftLegPivot.rotation.x = 0.2;
                 }
