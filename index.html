@@ -1917,6 +1917,104 @@
             }
             mesh.material = matArr;
         }
+        // ==================== 基本ブロック(草・土・石・パステルブロック等)のインスタンス描画 ====================
+        // これまでは「ブロック1個 = Meshオブジェクト1個 = 描画コール1回」だったため、
+        // 地形が広がるほど描画コール数が数千〜数万に増えて重くなっていた。
+        // 家具・水・動物・トロッコ・魚は今まで通り個別メッシュのままにして挙動を一切変えず、
+        // それ以外の「type:'basic'かつ水ではないブロック」だけをブロックの種類ごとに
+        // 1つのTHREE.InstancedMeshにまとめることで、見た目を変えずに描画コール数を大幅に減らす。
+        // (種類ごとの描画コールになるので、例えば草・土・石だけなら地形が何マスに広がっても3回で済む)
+        const instancedBlockTypes = new Map(); // blockId -> { mesh, capacity, keyByIndex, indexByKey }
+        const instanceDummy = new THREE.Object3D();
+        const instanceMatrixHelper = new THREE.Matrix4();
+        function createInstancedType(blockInfo) {
+            const initialCapacity = 4096;
+            const instMesh = new THREE.InstancedMesh(boxGeometry, blockInfo.material, initialCapacity);
+            instMesh.count = 0;
+            if (instMesh.instanceMatrix.setUsage) instMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            // InstancedMeshは既定だと(全インスタンスの広がりを考慮しない)原点付近の狭い範囲でしか
+            // 視錐台カリングの判定ができず、離れた場所のブロックが誤って描画されなくなってしまうため、
+            // このメッシュについてはカリングを無効化して常に描画対象にする(挙動維持のための安全策)。
+            instMesh.frustumCulled = false;
+            instMesh.userData.isBasicBlockInstances = true;
+            instMesh.userData.blockId = blockInfo.id;
+            scene.add(instMesh);
+            const entry = { mesh: instMesh, capacity: initialCapacity, keyByIndex: [], indexByKey: new Map() };
+            instancedBlockTypes.set(blockInfo.id, entry);
+            blockMeshes.push(instMesh); // レイキャスト(破壊・設置判定)対象に登録
+            return entry;
+        }
+        function growInstancedType(entry) {
+            const oldMesh = entry.mesh;
+            const newCapacity = entry.capacity * 2;
+            const newMesh = new THREE.InstancedMesh(boxGeometry, oldMesh.material, newCapacity);
+            if (newMesh.instanceMatrix.setUsage) newMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            newMesh.frustumCulled = false;
+            newMesh.userData.isBasicBlockInstances = true;
+            newMesh.userData.blockId = oldMesh.userData.blockId;
+            for (let i = 0; i < oldMesh.count; i++) {
+                oldMesh.getMatrixAt(i, instanceMatrixHelper);
+                newMesh.setMatrixAt(i, instanceMatrixHelper);
+            }
+            newMesh.count = oldMesh.count;
+            scene.remove(oldMesh);
+            scene.add(newMesh);
+            const idx = blockMeshes.indexOf(oldMesh);
+            if (idx > -1) blockMeshes[idx] = newMesh; else blockMeshes.push(newMesh);
+            entry.mesh = newMesh;
+            entry.capacity = newCapacity;
+        }
+        function addInstancedBlock(x, y, z, blockInfo, key) {
+            let entry = instancedBlockTypes.get(blockInfo.id);
+            if (!entry) entry = createInstancedType(blockInfo);
+            if (entry.mesh.count >= entry.capacity) growInstancedType(entry);
+            const index = entry.mesh.count;
+            instanceDummy.position.set(x, y, z);
+            instanceDummy.updateMatrix();
+            entry.mesh.setMatrixAt(index, instanceDummy.matrix);
+            entry.mesh.instanceMatrix.needsUpdate = true;
+            entry.mesh.count = index + 1;
+            entry.keyByIndex[index] = key;
+            entry.indexByKey.set(key, index);
+        }
+        function removeInstancedBlock(blockId, key) {
+            const entry = instancedBlockTypes.get(blockId);
+            if (!entry) return;
+            const index = entry.indexByKey.get(key);
+            if (index === undefined) return;
+            const lastIndex = entry.mesh.count - 1;
+            if (index !== lastIndex) {
+                // 削除するインスタンスの位置に、末尾のインスタンスを詰め替える(swap-remove)
+                entry.mesh.getMatrixAt(lastIndex, instanceMatrixHelper);
+                entry.mesh.setMatrixAt(index, instanceMatrixHelper);
+                const lastKey = entry.keyByIndex[lastIndex];
+                entry.keyByIndex[index] = lastKey;
+                entry.indexByKey.set(lastKey, index);
+            }
+            entry.keyByIndex.pop();
+            entry.indexByKey.delete(key);
+            entry.mesh.count = lastIndex;
+            entry.mesh.instanceMatrix.needsUpdate = true;
+        }
+        function makeBasicBlockProxy(x, y, z, blockInfo, key) {
+            // activeBlocksや当たり判定・水流・レール判定などの既存ロジックは、格納されているのが
+            // 本物のTHREE.Meshかどうかを気にせず「.userData」「.position」だけを見て動いている。
+            // そのため、実体は持たない(=画面には直接描画されない)軽量なプロキシオブジェクトを
+            // 代わりに格納することで、それらの既存ロジックを一切変更せずに済むようにしている。
+            return {
+                isBasicBlockProxy: true,
+                position: { x, y, z },
+                userData: { mainKey: key, blockId: blockInfo.id, isWater: false, isFurniture: false },
+            };
+        }
+        function getKeyFromInstancedHit(intersect) {
+            const obj = intersect.object;
+            if (!obj || !obj.isInstancedMesh || !obj.userData.isBasicBlockInstances) return null;
+            const entry = instancedBlockTypes.get(obj.userData.blockId);
+            if (!entry) return null;
+            const key = entry.keyByIndex[intersect.instanceId];
+            return key !== undefined ? key : null;
+        }
         function addBlockMesh(x, y, z, blockInfo, yaw = 0, waterLevel = 3) {
             if (blockInfo.type === 'animal') {
                 if (blockInfo.subtype === 'cow') spawnCow(x, y, z);
@@ -1948,18 +2046,20 @@
                 // ドアは毎フレームの開閉判定のため専用リストにも登録しておく
                 if (mesh.userData.isDoor) doorMeshes.push(mesh);
                 for (const k of blocksToOccupy) { activeBlocks.set(k, mesh); }
-            } else {
-                if (blockInfo.isWater) mesh = new THREE.Mesh(boxGeometry, []);
-                else mesh = new THREE.Mesh(boxGeometry, new THREE.MeshLambertMaterial({ map: blockInfo.map, transparent: blockInfo.transparent, alphaTest: blockInfo.transparent ? 0.5 : 0 }));
-
+            } else if (blockInfo.isWater) {
+                mesh = new THREE.Mesh(boxGeometry, []);
                 mesh.position.set(x, y, z); mesh.userData.mainKey = key;
-                mesh.userData.isWater = blockInfo.isWater || false;
+                mesh.userData.isWater = true;
                 mesh.userData.blockId = blockInfo.id;
-                if (blockInfo.isWater) {
-                    mesh.userData.waterLevel = waterLevel;
-                    waterUpdateQueue.add(key);
-                }
+                mesh.userData.waterLevel = waterLevel;
+                waterUpdateQueue.add(key);
                 scene.add(mesh); blockMeshes.push(mesh); activeBlocks.set(key, mesh);
+            } else {
+                // 水以外の通常ブロックはInstancedMeshにまとめて描画するので、
+                // シーンには追加せず、既存ロジック用の軽量なプロキシだけをactiveBlocksに登録する。
+                addInstancedBlock(x, y, z, blockInfo, key);
+                mesh = makeBasicBlockProxy(x, y, z, blockInfo, key);
+                activeBlocks.set(key, mesh);
             }
             // レールの自動接続更新
             if (blockInfo.id === 101) {
@@ -2010,6 +2110,9 @@
                         const doorIndex = doorMeshes.indexOf(mesh);
                         if (doorIndex > -1) doorMeshes.splice(doorIndex, 1);
                     }
+                } else if (mesh.isBasicBlockProxy) {
+                    // InstancedMesh側からも該当インスタンスを取り除く(挙動を変えず描画コールだけ減らす対応)
+                    removeInstancedBlock(mesh.userData.blockId, key);
                 } else {
                     const index = blockMeshes.indexOf(mesh);
                     if (index > -1) blockMeshes.splice(index, 1);
@@ -2162,7 +2265,13 @@
             const intersects = raycaster.intersectObjects(checkTargets, false);
             if (intersects.length > 0 && intersects[0].distance <= 8) {
                 const intersect = intersects[0];
+                // InstancedMeshにまとめた通常ブロックがヒットした場合は、
+                // instanceIdから元のブロック座標(key)を逆引きする。
+                const instancedKey = getKeyFromInstancedHit(intersect);
                 if (event.button === 0) {
+                    if (instancedKey) {
+                        removeBlockMesh(instancedKey);
+                    } else {
                     let obj = intersect.object;
                     while (obj && !obj.userData.isAnimal && !obj.userData.isMinecart && !obj.userData.isFish && !obj.userData.mainKey) { obj = obj.parent; }
 
@@ -2183,10 +2292,17 @@
                     } else if (obj && obj.userData.mainKey) {
                         removeBlockMesh(obj.userData.mainKey);
                     }
+                    }
                 } else if (event.button === 2) {
                     const normal = intersect.face.normal;
-                    let p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
+                    let p;
+                    if (instancedKey) {
+                        const [kx, ky, kz] = instancedKey.split(',').map(Number);
+                        p = { x: kx, y: ky, z: kz };
+                    } else {
+                        p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
                             intersect.object.parent.position.clone().add(intersect.object.position) : intersect.object.position;
+                    }
 
                     const newX = Math.round(p.x + normal.x); const newY = Math.round(p.y + normal.y); const newZ = Math.round(p.z + normal.z);
                     const selectedBlock = hotbarItems[currentSlotIndex];
@@ -2394,8 +2510,15 @@
 
                 if (intersects.length > 0 && intersects[0].distance <= 8) {
                     const intersect = intersects[0];
-                    let p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
+                    const instancedKey = getKeyFromInstancedHit(intersect);
+                    let p;
+                    if (instancedKey) {
+                        const [kx, ky, kz] = instancedKey.split(',').map(Number);
+                        p = { x: kx, y: ky, z: kz };
+                    } else {
+                        p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
                             intersect.object.parent.position.clone().add(intersect.object.position) : intersect.object.position;
+                    }
                     highlightMesh.position.copy(p); highlightMesh.visible = true;
                 } else highlightMesh.visible = false;
                 if (isSwinging) {
