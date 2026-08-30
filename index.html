@@ -12,7 +12,6 @@
             touch-action: none; -webkit-user-select: none;
         }
         #game-canvas { display: block; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10; pointer-events: none;
@@ -31,7 +30,6 @@
             color: rgba(255, 255, 255, 0.8); text-shadow: 1px 1px 0px #000;
             background: rgba(0, 0, 0, 0.3); border-radius: 8px; font-size: 12px; line-height: 1.6; text-align: right;
         }
-
         #hotbar-container { display: flex; justify-content: center; margin-bottom: 20px; gap: 4px; pointer-events: auto; }
         .hotbar-slot {
             width: 48px; height: 48px; background-color: rgba(139, 139, 139, 0.6);
@@ -47,7 +45,6 @@
             position: absolute; top: 2px; left: 4px; color: white; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 0 #000;
         }
         .block-preview { width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5)); pointer-events: none; }
-
         #item-popup {
             position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
             color: white; font-size: 20px; font-weight: bold; text-shadow: 2px 2px 0 #000;
@@ -75,17 +72,9 @@
             padding: 15px; display: flex; flex-direction: column; gap: 15px; z-index: 5;
             box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
         }
-
         .inv-header { display: flex; justify-content: space-between; align-items: center; }
         .inv-title { font-size: 18px; font-weight: bold; color: #333; }
         .inv-item-name-box { font-size: 16px; color: #fff; background: #333; padding: 4px 10px; border-radius: 4px; min-width: 150px; text-align: center; border: 2px inset #000; }
-        .inv-close-btn {
-            font-family: 'Courier New', Courier, monospace; font-size: 14px; font-weight: bold; cursor: pointer;
-            padding: 6px 14px; border: 3px solid; border-color: #fff #555 #555 #fff; border-radius: 4px;
-            background-color: #8b8b8b; color: #fff; touch-action: none; -webkit-tap-highlight-color: transparent;
-        }
-        .inv-close-btn:hover { background-color: #a0a0a0; }
-
         .inv-grid {
             display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px;
             overflow-y: auto; align-content: start; min-height: 240px; max-height: 300px;
@@ -125,7 +114,6 @@
             background-color: #8b8b8b; color: #fff;
         }
         .cart-prompt-box button:hover { background-color: #a0a0a0; }
-
         /* ==================== モバイル(スマホ・iPad)操作用UI ==================== */
         /* PCのマウス/キーボード操作は一切変更せず、タッチデバイスの時だけJSでdisplay:blockにする */
         #mobile-controls {
@@ -133,24 +121,29 @@
             z-index: 12; pointer-events: none; display: none;
         }
         #mobile-joystick-zone {
-            position: absolute; left: 22px; bottom: 22px; width: 130px; height: 130px;
+            /* 移動用ジョイスティック: 従来(130px)の1.5倍(195px)を上限に、
+               画面が狭い場合だけvwで縮小してホットバー(ブロック選択)と重ならないようにする */
+            position: absolute; left: 22px; bottom: 22px;
+            width: clamp(130px, 21vw, 195px); height: clamp(130px, 21vw, 195px);
             border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4);
             pointer-events: auto; touch-action: none;
         }
         #mobile-joystick-knob {
-            position: absolute; left: 50%; top: 50%; width: 55px; height: 55px;
-            margin-left: -27.5px; margin-top: -27.5px;
+            /* サイズが可変になったのでセンタリングはtransform: translate(-50%,-50%)で行う。
+               JS側のドラッグ処理もこの基準に合わせて translate(-50%,-50%) を土台にして上乗せする */
+            position: absolute; left: 50%; top: 50%;
+            width: clamp(55px, 8.9vw, 82.5px); height: clamp(55px, 8.9vw, 82.5px);
+            transform: translate(-50%, -50%);
             border-radius: 50%; background: rgba(255,255,255,0.55); border: 2px solid rgba(255,255,255,0.8);
             pointer-events: none;
         }
         #mobile-top-buttons {
-            /* 左上は座標表示(#info-panel)と重なってしまうため、PCでは非表示になる
-               #controls-panelと同じ右上に配置して重ならないようにする */
-            position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; pointer-events: auto;
+            position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; pointer-events: auto;
         }
         #mobile-action-buttons {
+            /* ジャンプ/破壊/設置ボタンの列。ボタンを大きくした分、詰まって見えないようgapも広げる */
             position: absolute; right: 20px; bottom: 22px; display: flex; flex-direction: column;
-            gap: 12px; align-items: center; pointer-events: auto;
+            gap: 18px; align-items: center; pointer-events: auto;
         }
         .mobile-ctrl-btn {
             width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6);
@@ -158,7 +151,12 @@
             justify-content: center; align-items: center; touch-action: none;
             -webkit-tap-highlight-color: transparent; user-select: none;
         }
-        .mobile-btn-round { width: 60px; height: 60px; font-size: 24px; background: rgba(0,0,0,0.35); }
+        .mobile-btn-round {
+            /* ジャンプ・破壊・設置ボタン: 従来(60px)の2倍(120px)を上限に、
+               画面が狭い場合だけvwで縮小してホットバー(ブロック選択)と重ならないようにする */
+            width: clamp(60px, 12.9vw, 120px); height: clamp(60px, 12.9vw, 120px);
+            font-size: clamp(24px, 5.2vw, 48px); background: rgba(0,0,0,0.35);
+        }
         #mobile-btn-break { background: rgba(200,60,60,0.55); }
         #mobile-btn-place { background: rgba(60,140,200,0.55); }
     </style>
@@ -217,7 +215,6 @@
                 <div class="inv-header">
                     <div class="inv-title">アイテム一覧</div>
                     <div class="inv-item-name-box" id="inv-item-name">アイテム名</div>
-                    <button id="inv-close-btn" class="inv-close-btn" title="閉じる">閉じる ✕</button>
                 </div>
                 <div class="inv-grid" id="inv-grid"></div>
                 <div style="font-size: 12px; color: #555; margin-top: 5px; text-align: center;">[十字キー]で選択 / [Enter]でホットバーに追加 / [E]で閉じる</div>
@@ -242,9 +239,7 @@
             const canvas = document.createElement('canvas');
             canvas.width = 64; canvas.height = 64;
             const ctx = canvas.getContext('2d');
-
             ctx.fillStyle = color || '#aaaaaa';
-
             if (type === 'basic' && name === '本棚') {
                 ctx.fillStyle = '#7a5230'; ctx.fillRect(16, 16, 32, 32);
                 ctx.fillStyle = '#9c6b3f'; ctx.fillRect(16, 16, 32, 4); ctx.fillRect(16, 44, 32, 4);
@@ -300,22 +295,18 @@
                 ctx.fillStyle = '#fff'; ctx.fillRect(16, 20, 12, 16); ctx.fillRect(36, 36, 12, 12);
                 ctx.fillStyle = '#999'; ctx.fillRect(10, 10, 4, 12); ctx.fillRect(50, 10, 4, 12);
                 ctx.fillStyle = '#dcaea3'; ctx.fillRect(24, 36, 16, 12);
-                // まん丸のかわいい目(にこっとしたハイライト付き)
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(22, 29, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(42, 29, 4, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(22, 29, 3.0, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(42, 29, 3.0, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(23, 27.7, 0.9, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(43, 27.7, 0.9, 0, Math.PI*2); ctx.fill();
-                // 微笑んでいる口
                 ctx.strokeStyle = '#5a2a2a'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(32, 43, 5, 0, Math.PI); ctx.stroke();
             } else if (type === 'sheep') {
                 ctx.fillStyle = color || '#f2f2f2'; ctx.fillRect(14, 20, 36, 26);
                 ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(18, 24, 6, 6); ctx.fillRect(34, 30, 6, 6); ctx.fillRect(26, 38, 6, 6);
                 ctx.fillStyle = '#dcaea3'; ctx.fillRect(10, 14, 16, 16);
                 ctx.fillStyle = (color || '#f2f2f2'); ctx.fillRect(10, 8, 16, 8);
-                // まん丸のかわいい目(にこっとしたハイライト付き)
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(15, 21, 3.2, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(23, 21, 3.2, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(15, 21, 2.2, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(23, 21, 2.2, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(15.6, 20.3, 0.65, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(23.6, 20.3, 0.65, 0, Math.PI*2); ctx.fill();
-                // 微笑んでいる口
                 ctx.strokeStyle = '#5a2a2a'; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.arc(19, 26, 3.2, 0, Math.PI); ctx.stroke();
                 ctx.fillStyle = '#dcaea3'; ctx.fillRect(16, 44, 6, 10); ctx.fillRect(42, 44, 6, 10);
             } else if (type === 'cat') {
@@ -327,7 +318,6 @@
                 ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(24, 32, 3.4, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(40, 32, 3.4, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(25, 30.5, 1, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(41, 30.5, 1, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = '#e0748a'; ctx.beginPath(); ctx.moveTo(32, 40); ctx.lineTo(29, 44); ctx.lineTo(35, 44); ctx.closePath(); ctx.fill();
-                // 微笑んでいる口
                 ctx.strokeStyle = '#5a2a2a'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(32, 46, 4.5, 0, Math.PI); ctx.stroke();
             } else if (type === 'dog') {
                 ctx.fillStyle = color || '#c8935a';
@@ -340,7 +330,6 @@
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(25, 30.5, 1, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(41, 30.5, 1, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = color || '#c8935a'; ctx.beginPath(); ctx.ellipse(32, 44, 8, 6, 0, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(32, 42, 3, 0, Math.PI * 2); ctx.fill();
-                // 微笑んでいる口
                 ctx.strokeStyle = '#5a2a2a'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(32, 49, 4, 0, Math.PI); ctx.stroke();
             } else if (type === 'clownfish') {
                 ctx.fillStyle = '#ff7f27'; ctx.beginPath(); ctx.ellipse(28, 32, 18, 12, 0, 0, Math.PI * 2); ctx.fill();
@@ -349,7 +338,6 @@
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(16, 28, 4, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(16, 28, 2.7, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(16.7, 27.2, 0.8, 0, Math.PI * 2); ctx.fill();
-                // 微笑んでいる口
                 ctx.strokeStyle = '#5a2a2a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(12, 31, 2, 0, Math.PI); ctx.stroke();
             } else if (type === 'rail') {
                 ctx.fillStyle = '#8b5a2b';
@@ -402,7 +390,6 @@
             sCtx.fillRect(0, 10, size, 2);
             const sideTex = new THREE.CanvasTexture(sideCanvas);
             sideTex.magFilter = THREE.NearestFilter; sideTex.minFilter = THREE.NearestFilter;
-
             const topCanvas = document.createElement('canvas'); topCanvas.width = size; topCanvas.height = size;
             const tCtx = topCanvas.getContext('2d');
             tCtx.fillStyle = baseColorHex; tCtx.fillRect(0, 0, size, size);
@@ -444,7 +431,6 @@
             } else {
                 ctx.fillStyle = type.color; ctx.fillRect(0, 0, 16, 16);
                 if (type.name === '本棚') {
-                    // マインクラフトの本棚を意識し、上下は木の板のフチ、中央に本の背表紙が並ぶ見た目にする
                     ctx.fillStyle = '#7a5230'; ctx.fillRect(0, 0, 16, 16);
                     ctx.fillStyle = '#9c6b3f'; ctx.fillRect(0, 0, 16, 2); ctx.fillRect(0, 14, 16, 2);
                     const bookColors = ['#b23a2e', '#2e6db2', '#3a8f3a', '#c9a227', '#7a3a9c', '#1f7a7a', '#c9622a', '#8f1f3a'];
@@ -486,7 +472,6 @@
                 { id: 7, name: '黒曜石', type: 'basic', color: '#221144' },
                 { id: 8, name: '雪', type: 'basic', color: '#ffffff' },
                 { id: 9, name: '金ブロック', type: 'basic', color: '#ffd700' },
-
                 { id: 200, name: 'パステルサクラピンクブロック', type: 'basic', color: '#eb9898' },
                 { id: 201, name: 'パステルコーラルピンクブロック', type: 'basic', color: '#ebad98' },
                 { id: 202, name: 'パステルピーチブロック', type: 'basic', color: '#ebc298' },
@@ -519,7 +504,6 @@
                 { id: 32, name: '水色ベット', type: 'furniture', subtype: 'bed', color: '#55aaff' },
                 { id: 33, name: '黄ベット', type: 'furniture', subtype: 'bed', color: '#ffcc00' },
                 { id: 34, name: '黄緑ベット', type: 'furniture', subtype: 'bed', color: '#88cc22' },
-
                 { id: 12, name: '木のドア', type: 'furniture', subtype: 'door', color: '#8b5a2b' },
                 { id: 13, name: '白いドア', type: 'furniture', subtype: 'door', color: '#dddddd' },
                 { id: 50, name: 'ピンクのドア', type: 'furniture', subtype: 'door', color: '#ff88bb' },
@@ -545,7 +529,6 @@
                 { id: 20, name: 'ろうそく(白)', type: 'furniture', subtype: 'candle', color: '#ffffff' },
                 { id: 21, name: '木のトラップドア', type: 'furniture', subtype: 'trapdoor', color: '#8b5a2b' },
                 { id: 22, name: 'ランタン', type: 'furniture', subtype: 'lantern', color: '#ffaa00' },
-
                 { id: 40, name: '木の階段ブロック', type: 'furniture', subtype: 'stairs', color: '#cdaa7d' },
                 { id: 41, name: '白い階段ブロック', type: 'furniture', subtype: 'stairs', color: '#dddddd' },
                 { id: 42, name: 'ピンクの階段ブロック', type: 'furniture', subtype: 'stairs', color: '#ff88bb' },
@@ -576,7 +559,6 @@
         Object.values(INVENTORY_DATA).forEach(category => {
             category.forEach(item => {
                 item.icon = generateIcon(item.subtype || item.type, item.color, item.name);
-
                 if (item.isWater) {
                     waterTexture = createPixelTexture(item);
                     item.map = waterTexture;
@@ -597,7 +579,6 @@
         for (let i = 0; i < 9; i++) {
             if (INVENTORY_DATA.minerals[i]) hotbarItems[i] = INVENTORY_DATA.minerals[i];
         }
-
         let currentSlotIndex = 0;
         let isInventoryOpen = false;
         let currentInvTab = 'minerals';
@@ -621,25 +602,15 @@
                 const slot = document.createElement('div');
                 slot.className = `hotbar-slot ${i === currentSlotIndex ? 'active' : ''}`;
                 slot.innerHTML = `<span class="slot-number">${i + 1}</span>`;
-
                 const item = hotbarItems[i];
                 if (item) {
                     const preview = document.createElement('img');
                     preview.className = 'block-preview'; preview.src = item.icon;
                     slot.appendChild(preview);
                 }
-
                 slot.addEventListener('click', () => {
                     if (!isInventoryOpen) { currentSlotIndex = i; updateHotbarSelection(); }
                 });
-                // タッチデバイスでは、ここでpreventDefault/stopPropagationしておかないと
-                // タップ後にブラウザが合成のmousedownイベントを発生させてしまい、それが
-                // document側の破壊/設置ハンドラ(handlePointerAction)まで届いて
-                // 「アイテムを選んだだけなのに正面のブロックを壊してしまう」不具合になる。
-                slot.addEventListener('touchstart', (event) => {
-                    event.stopPropagation(); event.preventDefault();
-                    if (!isInventoryOpen) { currentSlotIndex = i; updateHotbarSelection(); }
-                }, { passive: false });
                 hotbarContainer.appendChild(slot);
             }
         }
@@ -667,7 +638,6 @@
         function renderInventoryGrid() {
             const items = INVENTORY_DATA[currentInvTab];
             invGrid.innerHTML = '';
-
             document.querySelectorAll('.inv-tab').forEach(tab => {
                 if (tab.dataset.tab === currentInvTab) tab.classList.add('active');
                 else tab.classList.remove('active');
@@ -706,36 +676,14 @@
                 currentInvTab = e.target.dataset.tab; invFocusedIndex = 0; renderInventoryGrid();
             });
         });
-        const invCloseBtn = document.getElementById('inv-close-btn');
-        invCloseBtn.addEventListener('click', () => {
-            if (isInventoryOpen) toggleInventory();
-        });
-        invCloseBtn.addEventListener('touchstart', (event) => {
-            event.stopPropagation(); event.preventDefault();
-            if (isInventoryOpen) toggleInventory();
-        }, { passive: false });
-        const activeBlocks = new Map();
+        const activeBlocks = {};
         const blockMeshes = [];
-        // ドア(開閉判定)だけを毎フレーム調べられるようにする専用リスト。
-        // これが無いと、ドアの開閉チェックのためだけに毎フレーム全ブロックを走査することになってしまう。
-        const doorMeshes = [];
-        // 動物・トロッコ・魚の当たり判定メッシュをblockMeshesから取り除くための共通ヘルパー。
-        // (blockMeshesを毎フレーム作り直さずに済むよう、追加/削除のたびにこの配列自体を最新に保つ)
-        function removeFromBlockMeshes(mesh) {
-            if (!mesh) return;
-            const idx = blockMeshes.indexOf(mesh);
-            if (idx > -1) blockMeshes.splice(idx, 1);
-        }
         let animals = [];
         let minecarts = [];
         let fishes = [];
         let currentRidingCart = null;
         const CHUNK_SIZE = 16;
-        // 非インスタンス描画(ブロック1個=メッシュ1個)のため、描画距離とチャンクの深さは
-        // メッシュ総数(≒描画コール数)が大きくなりすぎないよう控えめに設定している。
         const RENDER_DISTANCE = 2;
-
-        // --- 地形生成用ノイズ(簡易2D Perlinノイズ。外部ライブラリなしの自前実装) ---
         function createPerlinNoise2D(seed) {
             const perm = new Uint8Array(512);
             const p = new Uint8Array(256);
@@ -767,14 +715,13 @@
                 );
             };
         }
-        const terrainNoise = createPerlinNoise2D(20260826); // 現在は未使用(フラットワールドのため)。丘陵地形に戻す場合はgetTerrainHeightで利用する
+        const terrainNoise = createPerlinNoise2D(20260826);
         const FLAT_WORLD_HEIGHT = 5;
         function getTerrainHeight(worldX, worldZ) {
-            // フラットワールド: 常に一定の高さを返す
             return FLAT_WORLD_HEIGHT;
         }
         function tryPlaceTree(x, yBase, z) {
-            const trunkHeight = 3 + Math.floor(Math.random() * 2); // 3〜4
+            const trunkHeight = 3 + Math.floor(Math.random() * 2);
             for (let i = 0; i < trunkHeight; i++) addBlockMesh(x, yBase + i, z, ALL_BLOCKS_MAP[4]);
             const leafY = yBase + trunkHeight - 1;
             for (let dy = 0; dy <= 1; dy++) {
@@ -787,22 +734,19 @@
             }
             addBlockMesh(x, leafY + 2, z, ALL_BLOCKS_MAP[102]);
         }
-        // --- チャンクの動的生成(プレイヤーの周囲だけを少しずつ生成し、無限に広がる地形にする) ---
         const loadedChunks = new Set();
         const pendingChunkKeys = new Set();
         const chunkGenQueue = [];
-        const TERRAIN_DEPTH = { dirt: 2, stone: 1 }; // grass(1) + dirt + stone の合計層数
+        const TERRAIN_DEPTH = { dirt: 2, stone: 1 };
         function generateChunk(cx, cz) {
             for (let x = 0; x < CHUNK_SIZE; x++) {
                 for (let z = 0; z < CHUNK_SIZE; z++) {
                     const worldX = cx * CHUNK_SIZE + x;
                     const worldZ = cz * CHUNK_SIZE + z;
                     const height = getTerrainHeight(worldX, worldZ);
-                    addBlockMesh(worldX, height, worldZ, ALL_BLOCKS_MAP[1]); // 草
-                    for (let d = 1; d <= TERRAIN_DEPTH.dirt; d++) addBlockMesh(worldX, height - d, worldZ, ALL_BLOCKS_MAP[2]); // 土
-                    for (let d = 1; d <= TERRAIN_DEPTH.stone; d++) addBlockMesh(worldX, height - TERRAIN_DEPTH.dirt - d, worldZ, ALL_BLOCKS_MAP[3]); // 石
-                    // 木は生成しない(フラットで何もない地形にするため無効化。tryPlaceTree自体は残してあるので、
-                    // 必要になれば再度呼び出すだけで木の生成を復活できる)
+                    addBlockMesh(worldX, height, worldZ, ALL_BLOCKS_MAP[1]);
+                    for (let d = 1; d <= TERRAIN_DEPTH.dirt; d++) addBlockMesh(worldX, height - d, worldZ, ALL_BLOCKS_MAP[2]);
+                    for (let d = 1; d <= TERRAIN_DEPTH.stone; d++) addBlockMesh(worldX, height - TERRAIN_DEPTH.dirt - d, worldZ, ALL_BLOCKS_MAP[3]);
                 }
             }
             loadedChunks.add(`${cx},${cz}`);
@@ -834,13 +778,10 @@
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.6); dirLight.position.set(10, 20, 10); scene.add(dirLight);
         let isLocked = false;
         let cameraYaw = 0; let cameraPitch = 0;
-        // スマホ・iPadなどタッチデバイスかどうか(PC操作には一切影響しない判定用フラグ)
         const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
         function lockPointer() {
             if (!isInventoryOpen) {
                 if (isTouchDevice) {
-                    // タッチデバイスではPointer Lock APIが使えない/不安定なため、
-                    // 実際のポインタロックを要求せず、直接ロック状態にしてブロッカーを隠すだけにする
                     isLocked = true;
                     const blockerEl = document.getElementById('blocker');
                     if (blockerEl) blockerEl.style.display = 'none';
@@ -871,7 +812,7 @@
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
         });
-        const SPAWN_X = 0, SPAWN_Z = 0; // リスポーン(と初期スポーン)の基準となる水平座標
+        const SPAWN_X = 0, SPAWN_Z = 0;
         const playerGroup = new THREE.Group(); playerGroup.position.set(0, 10, 0); scene.add(playerGroup);
         const yawGroup = new THREE.Group(); playerGroup.add(yawGroup);
         const pitchGroup = new THREE.Group(); pitchGroup.position.set(0, 1.6, 0); yawGroup.add(pitchGroup);
@@ -880,23 +821,18 @@
         const skinMat = new THREE.MeshLambertMaterial({ color: 0xffe0bd });
         const shirtMat = new THREE.MeshLambertMaterial({ color: 0x0088ff });
         const pantsMat = new THREE.MeshLambertMaterial({ color: 0x223388 });
-
         const headGroup = new THREE.Group(); headGroup.position.set(0, 1.6, 0); avatarGroup.add(headGroup);
         const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), skinMat); headMesh.position.set(0, 0.3, 0); headGroup.add(headMesh);
         const bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.3), shirtMat); bodyMesh.position.set(0, 1.05, 0); avatarGroup.add(bodyMesh);
-
         const rightArmPivot = new THREE.Group(); rightArmPivot.position.set(0.45, 1.4, 0);
         const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.7, 0.2), skinMat); rightArm.position.set(0, -0.35, 0);
         rightArmPivot.add(rightArm); avatarGroup.add(rightArmPivot);
-
         const leftArmPivot = new THREE.Group(); leftArmPivot.position.set(-0.45, 1.4, 0);
         const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.7, 0.2), skinMat); leftArm.position.set(0, -0.35, 0);
         leftArmPivot.add(leftArm); avatarGroup.add(leftArmPivot);
-
         const rightLegPivot = new THREE.Group(); rightLegPivot.position.set(0.15, 0.7, 0);
         const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.25), pantsMat); rightLeg.position.set(0, -0.35, 0);
         rightLegPivot.add(rightLeg); avatarGroup.add(rightLegPivot);
-
         const leftLegPivot = new THREE.Group(); leftLegPivot.position.set(-0.15, 0.7, 0);
         const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.25), pantsMat); leftLeg.position.set(0, -0.35, 0);
         leftLegPivot.add(leftLeg); avatarGroup.add(leftLegPivot);
@@ -964,10 +900,6 @@
             else currentSlotIndex = (currentSlotIndex - 1 + 9) % 9;
             updateHotbarSelection();
         });
-        // ==================== モバイル(スマホ・iPad)操作 ====================
-        // 既存のPC用の変数(moveForward等/cameraYaw・cameraPitch)や関数(lockPointer/
-        // toggleInventory/showRespawnPrompt/exitMinecart/handlePointerAction)をそのまま
-        // 流用してタッチ操作から動かすことで、PC用キーボード・マウス操作のロジックには一切手を加えない。
         if (isTouchDevice) {
             document.body.classList.add('touch-device');
             const mobileControlsEl = document.getElementById('mobile-controls');
@@ -979,27 +911,28 @@
             if (touchHint) touchHint.style.display = 'block';
             const controlsPanel = document.getElementById('controls-panel');
             if (controlsPanel) controlsPanel.style.display = 'none';
-            // 一部のモバイルブラウザ向けの保険: clickが発火しない場合でも確実に開始できるようにする
             blocker.addEventListener('touchend', (event) => { event.preventDefault(); lockPointer(); }, { passive: false });
         }
-        // --- 仮想ジョイスティック(WASDと同じ moveForward 等の真偽値を動かすだけ) ---
         const joystickZone = document.getElementById('mobile-joystick-zone');
         const joystickKnob = document.getElementById('mobile-joystick-knob');
         let joystickTouchId = null;
-        const JOYSTICK_RADIUS = 55;
+        // ジョイスティックのCSSサイズがclamp()で可変になったため、ノブが動ける最大距離(半径)は
+        // 元のバランス比率(55/130)を保ったまま、実際に描画されているゾーンの大きさから毎回計算する
+        const JOYSTICK_RADIUS_RATIO = 55 / 130;
         const JOYSTICK_THRESHOLD = 0.35;
         function resetJoystick() {
             moveForward = false; moveBackward = false; moveLeft = false; moveRight = false;
-            if (joystickKnob) joystickKnob.style.transform = 'translate(0px, 0px)';
+            if (joystickKnob) joystickKnob.style.transform = 'translate(-50%, -50%)';
         }
         function updateJoystick(touch) {
             const rect = joystickZone.getBoundingClientRect();
+            const radius = rect.width * JOYSTICK_RADIUS_RATIO;
             const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
             let dx = touch.clientX - cx, dy = touch.clientY - cy;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist > JOYSTICK_RADIUS) { dx = dx / dist * JOYSTICK_RADIUS; dy = dy / dist * JOYSTICK_RADIUS; }
-            if (joystickKnob) joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-            const nx = dx / JOYSTICK_RADIUS, ny = dy / JOYSTICK_RADIUS;
+            if (dist > radius) { dx = dx / dist * radius; dy = dy / dist * radius; }
+            if (joystickKnob) joystickKnob.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px)`;
+            const nx = dx / radius, ny = dy / radius;
             moveForward = ny < -JOYSTICK_THRESHOLD;
             moveBackward = ny > JOYSTICK_THRESHOLD;
             moveLeft = nx < -JOYSTICK_THRESHOLD;
@@ -1028,9 +961,6 @@
             joystickZone.addEventListener('touchend', joystickEnd, { passive: false });
             joystickZone.addEventListener('touchcancel', joystickEnd, { passive: false });
         }
-        // --- 画面を指でドラッグして視点操作(PCのmousemoveと同じ式をタッチ差分で計算) ---
-        // ジョイスティックやボタン上のタッチはそれぞれのハンドラでstopPropagation()しているため、
-        // ここに来るのは「操作UI以外の場所」で始まったタッチのみ
         let lookTouchId = null; let lastTouchX = 0; let lastTouchY = 0;
         document.addEventListener('touchstart', (event) => {
             if (!isLocked) return;
@@ -1063,7 +993,6 @@
         }
         document.addEventListener('touchend', releaseLookTouch, { passive: true });
         document.addEventListener('touchcancel', releaseLookTouch, { passive: true });
-        // --- アクションボタン(ジャンプ/破壊/設置/インベントリ/視点切替/リスポーン) ---
         function bindMobileButton(id, onDown, onUp) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -1081,17 +1010,7 @@
         bindMobileButton('mobile-btn-jump', () => {
             if (currentRidingCart) { exitMinecart(); return; }
             moveUp = true;
-            // PCの[Space]キーと同じダブルタップ判定(0.5秒以内の連打で飛行モードON/OFFを切り替える)を
-            // ジャンプボタンにもそのまま流用する。lastSpacePressはPC用キーボード処理と共有している。
-            const now = performance.now();
-            if (now - lastSpacePress < 500) {
-                isFlying = !isFlying;
-                if (isFlying) velocity.y = 0;
-                lastSpacePress = 0;
-            } else {
-                lastSpacePress = now;
-                if (canJump && !isFlying) { velocity.y += 10; canJump = false; }
-            }
+            if (canJump && !isFlying) { velocity.y += 10; canJump = false; }
         }, () => { moveUp = false; });
         bindMobileButton('mobile-btn-break', () => { handlePointerAction({ button: 0 }); });
         bindMobileButton('mobile-btn-place', () => { handlePointerAction({ button: 2 }); });
@@ -1101,25 +1020,19 @@
         const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
         const invisibleHitboxMat = new THREE.MeshBasicMaterial({ visible: false });
         function updateRailOrientation(x, y, z) {
-            const mesh = activeBlocks.get(`${x},${y},${z}`);
+            const mesh = activeBlocks[`${x},${y},${z}`];
             if (!mesh || mesh.userData.blockId !== 101) return;
-
             const isRail = (nx, ny, nz) => {
-                const m = activeBlocks.get(`${nx},${ny},${nz}`);
+                const m = activeBlocks[`${nx},${ny},${nz}`];
                 return m && m.userData.blockId === 101;
             };
-
-            // X+ is East, X- is West, Z+ is South, Z- is North
             const hasE = isRail(x+1, y, z);
             const hasW = isRail(x-1, y, z);
             const hasS = isRail(x, y, z+1);
             const hasN = isRail(x, y, z-1);
-
             let showSZ = false, showSX = false;
             let showCNW = false, showCNE = false, showCSW = false, showCSE = false;
-
             const count = [hasN, hasS, hasE, hasW].filter(Boolean).length;
-
             if (count === 0) {
                 showSZ = true;
             } else if (count === 1) {
@@ -1133,7 +1046,6 @@
                 else if (hasS && hasW) showCSW = true;
                 else if (hasS && hasE) showCSE = true;
             } else {
-                // T-Junctions (3) and Crossings (4). Draw lines to available adjacent neighbors
                 if (hasN && hasS) showSZ = true;
                 if (hasE && hasW) showSX = true;
                 if (hasN && hasW) showCNW = true;
@@ -1148,72 +1060,42 @@
                 mesh.userData.parts.cne.visible = showCNE;
                 mesh.userData.parts.csw.visible = showCSW;
                 mesh.userData.parts.cse.visible = showCSE;
-                // 段差レール(斜め接続)の見た目を使わない場合は、必ず初期状態(位置・拡大縮小なし)に戻す。
-                // これをしないと、一度斜めレールとして描画されたパーツが、通常のレールに戻った後も
-                // ズレた位置・伸びた長さのまま残ってしまう。
-                mesh.userData.parts.sz.position.set(0, 0, 0);
-                mesh.userData.parts.sz.scale.set(1, 1, 1);
-                mesh.userData.parts.sx.position.set(0, 0, 0);
-                mesh.userData.parts.sx.scale.set(1, 1, 1);
             }
             mesh.rotation.y = 0;
             mesh.rotation.x = 0;
             mesh.rotation.z = 0;
-            // 1段上にあるレールへ向けて、斜めに立てかけて繋げる(上りスロープ)。
-            // 本物のマインクラフトと同じく、上りスロープは「完全に孤立しているレール」だけでなく、
-            // 「反対側は地面などに平らに1本繋がっていて、もう片方の端だけ1段上に上る」レールでも成立する
-            // (例: 地面を這うまっすぐなレールの続きが、階段の下から1段目に上っていく場合など)。
-            // そのため、同じ高さの隣接が0本(完全孤立)、または1本(片側だけ平らに繋がっている)の場合に判定する。
-            // ただし、既に平らな隣接がある向き(軸)と違う軸へ上ることはできない(レール1本はまっすぐか
-            // カーブのどちらか一方の形しか取れないため)。
-            if ((count === 0 || count === 1) && mesh.userData.parts) {
-                const TILT_ANGLE = Math.PI / 4; // 段差1マスにつき45度(水平1マス・垂直1マスの斜面と一致する角度)
-                const STRETCH = Math.SQRT2; // 斜めになった分だけレール自体を伸ばし、上下のレールにすき間なく届かせる
-                // レールは通常 y=-0.4 の高さに置かれている。原点(マス中心)を軸に回転させると、
-                // その -0.4 のオフセットごと回転してしまうため、回転後にちょうど「自分のマスの端の高さ(-0.4)」から
-                // 「隣のマス(1段上)のレールの高さ(+0.6)」まで届くよう、あらかじめ計算した分だけ位置を補正する。
-                const Y_OFFSET = 0.1 + 0.4 * Math.cos(TILT_ANGLE);
-                const PERP_OFFSET = 0.4 * Math.sin(TILT_ANGLE);
+            if (count === 0 && mesh.userData.parts) {
+                const TILT_ANGLE = Math.PI / 5.5;
                 const diagDirs = [
-                    { dx: 0, dz: -1, axis: 'x', coeff: 1 },  // 北
-                    { dx: 0, dz: 1, axis: 'x', coeff: -1 },  // 南
-                    { dx: -1, dz: 0, axis: 'z', coeff: -1 }, // 西
-                    { dx: 1, dz: 0, axis: 'z', coeff: 1 }    // 東
+                    { dx: 0, dz: -1, axis: 'x', coeff: 1 },
+                    { dx: 0, dz: 1, axis: 'x', coeff: -1 },
+                    { dx: -1, dz: 0, axis: 'z', coeff: -1 },
+                    { dx: 1, dz: 0, axis: 'z', coeff: 1 }
                 ];
-                // count===1の場合は、既に平らに繋がっている向きの軸(sz=南北 / sx=東西)としか
-                // 上りスロープを両立できないので、その軸だけに絞り込む。
-                const requiredAxis = count === 1 ? (showSZ ? 'x' : 'z') : null;
                 for (const d of diagDirs) {
-                    if (requiredAxis && d.axis !== requiredAxis) continue;
-                    // 同じ高さに既にレールがある向きは、そのままの平らな接続を優先する(上りスロープにしない)。
-                    if (isRail(x + d.dx, y, z + d.dz)) continue;
-                    // 1段上にレールがある場合だけ、このレールを「上りスロープ」にする。
-                    // 1段下にレールがある場合(=自分は段差の上側)は、平らなレールのまま何もしない。
-                    if (!isRail(x + d.dx, y + 1, z + d.dz)) continue;
-                    const s = d.coeff;
-                    if (d.axis === 'x') {
-                        mesh.userData.parts.sz.visible = true;
-                        mesh.userData.parts.sx.visible = false;
-                        mesh.rotation.x = s * TILT_ANGLE;
-                        mesh.userData.parts.sz.scale.set(1, 1, STRETCH);
-                        mesh.userData.parts.sz.position.set(0, Y_OFFSET, PERP_OFFSET * s);
-                    } else {
-                        mesh.userData.parts.sx.visible = true;
-                        mesh.userData.parts.sz.visible = false;
-                        mesh.rotation.z = s * TILT_ANGLE;
-                        mesh.userData.parts.sx.scale.set(STRETCH, 1, 1);
-                        mesh.userData.parts.sx.position.set(-PERP_OFFSET * s, Y_OFFSET, 0);
+                    let heightSign = 0;
+                    if (isRail(x + d.dx, y + 1, z + d.dz)) heightSign = 1;
+                    else if (isRail(x + d.dx, y - 1, z + d.dz)) heightSign = -1;
+                    if (heightSign !== 0) {
+                        if (d.axis === 'x') {
+                            mesh.userData.parts.sz.visible = true;
+                            mesh.userData.parts.sx.visible = false;
+                            mesh.rotation.x = heightSign * d.coeff * TILT_ANGLE;
+                        } else {
+                            mesh.userData.parts.sx.visible = true;
+                            mesh.userData.parts.sz.visible = false;
+                            mesh.rotation.z = heightSign * d.coeff * TILT_ANGLE;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
         function updateFenceConnections(x, y, z) {
-            const mesh = activeBlocks.get(`${x},${y},${z}`);
+            const mesh = activeBlocks[`${x},${y},${z}`];
             if (!mesh || !mesh.userData.isFence || !mesh.userData.parts) return;
             Object.values(mesh.userData.parts).forEach(p => {
-                const nMesh = activeBlocks.get(`${x + p.dx},${y},${z + p.dz}`);
-                // 色違いのフェンス同士も、フェンスであれば(isFence)つながって見えるようにする
+                const nMesh = activeBlocks[`${x + p.dx},${y},${z + p.dz}`];
                 const connected = !!(nMesh && nMesh.userData && nMesh.userData.isFence);
                 p.upper.visible = connected;
                 p.lower.visible = connected;
@@ -1257,8 +1139,6 @@
                 group.add(hitbox1, hitbox2);
             }
             else if (item.subtype === 'fence') {
-                // 隣が柵の場合だけ、その方向にポストからマス目の端まで伸びる横木を出す。
-                // これにより直線・曲がり角(90度)・T字・十字がすべて自動でつながって見える(レールと同じ考え方)。
                 const post = new THREE.Mesh(new THREE.BoxGeometry(0.25, 1, 0.25), mainMat);
                 group.add(post);
                 const dirsInfo = [
@@ -1328,7 +1208,6 @@
             else if (item.subtype === 'rail') {
                 const ironMat = new THREE.MeshLambertMaterial({ color: 0x999999 });
                 const woodMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
-
                 function createStraight(isX) {
                     const grp = new THREE.Group();
                     const r1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.01), ironMat);
@@ -1340,8 +1219,7 @@
                         r1.position.set(0.25, -0.4, 0); r2.position.set(-0.25, -0.4, 0);
                     }
                     grp.add(r1, r2);
-
-                    const tieY = isX ? -0.476 : -0.475; // Z-fighting防止のわずかな高さ調整
+                    const tieY = isX ? -0.476 : -0.475;
                     for(let i=0; i<4; i++){
                         const tie = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.15), woodMat);
                         if (isX) {
@@ -1356,7 +1234,6 @@
                 }
                 function createCurve(rotY, tieYOffset) {
                     const grp = new THREE.Group();
-
                     for(let i=0; i<=4; i++){
                         const angle = (i/4) * (Math.PI/2);
                         const tie = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.15), woodMat);
@@ -1364,37 +1241,31 @@
                         tie.rotation.y = -angle;
                         grp.add(tie);
                     }
-
                     const numSegments = 8;
                     for(let i=0; i<numSegments; i++){
                         const a1 = (i/numSegments) * (Math.PI/2);
                         const a2 = ((i+1)/numSegments) * (Math.PI/2);
                         const aMid = (a1+a2)/2;
-
                         const outLen = (Math.PI/2 * 0.75) / numSegments;
                         const rOut = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, outLen * 1.05), ironMat);
                         rOut.position.set(-0.5 + Math.cos(aMid)*0.75, -0.4, -0.5 + Math.sin(aMid)*0.75);
                         rOut.rotation.y = -aMid;
                         grp.add(rOut);
-
                         const inLen = (Math.PI/2 * 0.25) / numSegments;
                         const rIn = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, inLen * 1.1), ironMat);
                         rIn.position.set(-0.5 + Math.cos(aMid)*0.25, -0.4, -0.5 + Math.sin(aMid)*0.25);
                         rIn.rotation.y = -aMid;
                         grp.add(rIn);
                     }
-
                     grp.rotation.y = rotY;
                     return grp;
                 }
-                // すべてのパーツを事前に生成
                 const sz = createStraight(false);
                 const sx = createStraight(true);
-                const cnw = createCurve(0, 0); // 北-西
-                const cne = createCurve(-Math.PI/2, -0.001); // 北-東
-                const cse = createCurve(Math.PI, -0.002); // 南-東
-                const csw = createCurve(Math.PI/2, -0.003); // 南-西
-                // 初期状態は非表示
+                const cnw = createCurve(0, 0);
+                const cne = createCurve(-Math.PI/2, -0.001);
+                const cse = createCurve(Math.PI, -0.002);
+                const csw = createCurve(Math.PI/2, -0.003);
                 sz.visible = false; sx.visible = false;
                 cnw.visible = false; cne.visible = false;
                 cse.visible = false; csw.visible = false;
@@ -1407,11 +1278,8 @@
         }
         const cuteEyeWhiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
         const cuteEyePupilMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-        // ハイライトは光源の向きに関係なく白く光って見えてほしいのでMeshBasicMaterialにする
         const cuteEyeSparkleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         function addCuteEyes(parentHead, opts) {
-            // 牛・羊・猫・犬・魚など動物の頭(headメッシュ)に、白目+黒目のまん丸の目を左右対称に付ける共通ヘルパー。
-            // 黒目に小さな光(ハイライト)を1つ足すことで、にこっとした嬉しそうな瞳になるようにしている。
             const eyeGeo = new THREE.SphereGeometry(opts.eyeRadius, 8, 8);
             const pupilGeo = new THREE.SphereGeometry(opts.pupilRadius, 8, 8);
             const sparkleGeo = new THREE.SphereGeometry(opts.pupilRadius * 0.4, 6, 6);
@@ -1419,7 +1287,6 @@
                 const eye = new THREE.Mesh(eyeGeo, cuteEyeWhiteMat);
                 eye.position.set(side * opts.xOffset, opts.y, opts.z);
                 parentHead.add(eye);
-                // 黒目を大きくしても不自然に飛び出さないよう、前後位置は黒目の大きさではなく白目の大きさを基準にする
                 const pupilZ = opts.z + opts.eyeRadius * 0.35;
                 const pupil = new THREE.Mesh(pupilGeo, cuteEyePupilMat);
                 pupil.position.set(side * opts.xOffset, opts.y, pupilZ);
@@ -1435,11 +1302,9 @@
         }
         const cuteMouthMat = new THREE.MeshLambertMaterial({ color: 0x5a2a2a });
         function addSmileMouth(parent, opts) {
-            // 目と同じ考え方の共通ヘルパー。TorusGeometryの下半分の弧だけを使うことで、
-            // なめらかなU字カーブ = 微笑んでいる口、を各動物の顔に付けられるようにする。
             const mouthGeo = new THREE.TorusGeometry(opts.radius, opts.tube, 6, 10, Math.PI);
             const mouth = new THREE.Mesh(mouthGeo, cuteMouthMat);
-            mouth.rotation.z = Math.PI; // 弧の向きを反転させ、上に開いたU字(smile)にする
+            mouth.rotation.z = Math.PI;
             mouth.position.set(0, opts.y, opts.z);
             parent.add(mouth);
         }
@@ -1464,20 +1329,16 @@
             const horn1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), darkMat); horn1.position.set(0.2, 0.3, 0);
             const horn2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), darkMat); horn2.position.set(-0.2, 0.3, 0);
             head.add(horn1, horn2);
-
             const snout = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), darkMat);
             snout.position.set(0, -0.1, 0.3);
             head.add(snout);
-            // 愛らしい顔になるよう、まん丸の目を鼻面の上に付ける
             addCuteEyes(head, { xOffset: 0.13, y: 0.08, z: 0.26, eyeRadius: 0.09, pupilRadius: 0.06 });
-            // 微笑んでいるような口を鼻面に付ける
             addSmileMouth(snout, { y: -0.02, z: 0.052, radius: 0.09, tube: 0.015 });
             const legs = [];
             const legPositions = [
                 {x: 0.2, y: 0.4, z: 0.35}, {x: -0.2, y: 0.4, z: 0.35},
                 {x: 0.2, y: 0.4, z: -0.35}, {x: -0.2, y: 0.4, z: -0.35}
             ];
-
             legPositions.forEach(pos => {
                 const pivot = new THREE.Group();
                 pivot.position.set(pos.x, pos.y, pos.z);
@@ -1487,15 +1348,10 @@
                 animalGroup.add(pivot);
                 legs.push(pivot);
             });
-
             animalGroup.userData.legs = legs;
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 1.2), invisibleHitboxMat);
             hitbox.position.set(0, 0.6, 0);
             animalGroup.add(hitbox);
-            // レイキャスト対象(破壊/選択判定用)の当たり判定メッシュを、毎フレーム配列を作り直さずに済むよう
-            // blockMeshesへ直接登録しておく(削除時はuserData.hitboxMeshを使ってこの配列から取り除く)
-            animalGroup.userData.hitboxMesh = hitbox;
-            blockMeshes.push(hitbox);
             scene.add(animalGroup);
             animals.push(animalGroup);
         }
@@ -1503,7 +1359,6 @@
             const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = baseColor || '#f2f2f2'; ctx.fillRect(0, 0, 64, 64);
-            // 半透明の黒でぼかしを乗せることで、色が違ってもふわふわした毛の質感になるようにする
             ctx.fillStyle = 'rgba(0,0,0,0.1)';
             for (let i = 0; i < 14; i++) {
                 ctx.beginPath();
@@ -1515,8 +1370,6 @@
             return new THREE.MeshLambertMaterial({ map: tex });
         }
         function spawnSheep(x, y, z, color) {
-            // 牛(spawnCow)と同じ枠組みで作った羊。userData.speedとcanStepUpだけを持たせることで、
-            // 牛の挙動(既存プログラム)には一切手を加えずに「牛より速く、1段の段差なら乗り越えられる」を実現する。
             const animalGroup = new THREE.Group();
             animalGroup.position.set(x, Math.floor(y) + 0.5, z);
             animalGroup.userData.isAnimal = true;
@@ -1527,12 +1380,10 @@
             animalGroup.userData.yaw = Math.random() * Math.PI * 2;
             animalGroup.rotation.y = animalGroup.userData.yaw;
             animalGroup.userData.targetYaw = animalGroup.userData.yaw;
-            animalGroup.userData.speed = 0.5; // 牛(0.3)より速い
-            animalGroup.userData.canStepUp = true; // 1ブロックの高さまでの段差なら乗り越えられる
-
+            animalGroup.userData.speed = 0.5;
+            animalGroup.userData.canStepUp = true;
             const woolMat = createSheepWoolMaterial(color);
             const skinMat = new THREE.MeshLambertMaterial({ color: 0xdcaea3 });
-
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 1.0), woolMat);
             body.position.set(0, 0.75, 0);
             animalGroup.add(body);
@@ -1543,15 +1394,11 @@
             const ear1 = new THREE.Mesh(earGeo, skinMat); ear1.position.set(0.22, 0.85, 0.55);
             const ear2 = new THREE.Mesh(earGeo, skinMat); ear2.position.set(-0.22, 0.85, 0.55);
             animalGroup.add(ear1, ear2);
-            // 頭にも毛(ウール)を乗せる
             const headWool = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.18, 0.4), woolMat);
             headWool.position.set(0, 0.2, -0.02);
             head.add(headWool);
-            // 愛らしい顔になるよう、まん丸の目を付ける
             addCuteEyes(head, { xOffset: 0.11, y: 0.03, z: 0.21, eyeRadius: 0.08, pupilRadius: 0.055 });
-            // 微笑んでいるような口を付ける
             addSmileMouth(head, { y: -0.07, z: 0.21, radius: 0.06, tube: 0.012 });
-
             const legs = [];
             const legPositions = [
                 {x: 0.22, y: 0.35, z: 0.35}, {x: -0.22, y: 0.35, z: 0.35},
@@ -1567,17 +1414,13 @@
                 legs.push(pivot);
             });
             animalGroup.userData.legs = legs;
-
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 1.2), invisibleHitboxMat);
             hitbox.position.set(0, 0.6, 0);
             animalGroup.add(hitbox);
-            animalGroup.userData.hitboxMesh = hitbox;
-            blockMeshes.push(hitbox);
             scene.add(animalGroup);
             animals.push(animalGroup);
         }
         function createFurMaterial(baseColor) {
-            // 羊のウール素材と同じ考え方で、色付きの毛並みっぽい質感を作る共通ヘルパー(猫・犬で使う)
             const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = baseColor || '#cccccc'; ctx.fillRect(0, 0, 64, 64);
@@ -1590,8 +1433,6 @@
             return new THREE.MeshLambertMaterial({ map: tex });
         }
         function spawnCat(x, y, z, color) {
-            // 羊(spawnSheep)と全く同じuserData(speed/canStepUp)にすることで、
-            // 「挙動は羊と同じ」という要望通りにしつつ、牛の既存コードには一切触れない。
             const animalGroup = new THREE.Group();
             animalGroup.position.set(x, Math.floor(y) + 0.5, z);
             animalGroup.userData.isAnimal = true;
@@ -1602,35 +1443,28 @@
             animalGroup.userData.yaw = Math.random() * Math.PI * 2;
             animalGroup.rotation.y = animalGroup.userData.yaw;
             animalGroup.userData.targetYaw = animalGroup.userData.yaw;
-            animalGroup.userData.speed = 7.5; // 従来(15.0)の半分
+            animalGroup.userData.speed = 7.5;
             animalGroup.userData.canStepUp = true;
-
             const furMat = createFurMaterial(color || '#e8a852');
             const noseMat = new THREE.MeshLambertMaterial({ color: 0xe0748a });
-
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.28, 0.5), furMat);
             body.position.set(0, 0.35, 0);
             animalGroup.add(body);
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.26, 0.26), furMat);
             head.position.set(0, 0.5, 0.32);
             animalGroup.add(head);
-            // 三角のとがった耳
             const earGeo = new THREE.ConeGeometry(0.07, 0.14, 4);
             const ear1 = new THREE.Mesh(earGeo, furMat); ear1.position.set(0.09, 0.16, 0); ear1.rotation.y = Math.PI / 4;
             const ear2 = new THREE.Mesh(earGeo, furMat); ear2.position.set(-0.09, 0.16, 0); ear2.rotation.y = Math.PI / 4;
             head.add(ear1, ear2);
-            // 愛らしい顔になるよう、まん丸の目を付ける
             addCuteEyes(head, { xOffset: 0.09, y: 0, z: 0.13, eyeRadius: 0.05, pupilRadius: 0.035 });
             const nose = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, 0.04), noseMat);
             nose.position.set(0, -0.05, 0.14);
             head.add(nose);
-            // 微笑んでいるような口を鼻の下に付ける
             addSmileMouth(head, { y: -0.1, z: 0.15, radius: 0.045, tube: 0.009 });
-            // しっぽ
             const tail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.35), furMat);
             tail.position.set(0, 0.45, -0.35); tail.rotation.x = Math.PI / 6;
             animalGroup.add(tail);
-
             const legs = [];
             const legPositions = [
                 {x: 0.11, y: 0.2, z: 0.18}, {x: -0.11, y: 0.2, z: 0.18},
@@ -1646,17 +1480,13 @@
                 legs.push(pivot);
             });
             animalGroup.userData.legs = legs;
-
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.6, 0.75), invisibleHitboxMat);
             hitbox.position.set(0, 0.35, 0);
             animalGroup.add(hitbox);
-            animalGroup.userData.hitboxMesh = hitbox;
-            blockMeshes.push(hitbox);
             scene.add(animalGroup);
             animals.push(animalGroup);
         }
         function spawnDog(x, y, z, color) {
-            // 猫と同じく、羊(spawnSheep)と同じuserData(speed/canStepUp)にする。
             const animalGroup = new THREE.Group();
             animalGroup.position.set(x, Math.floor(y) + 0.5, z);
             animalGroup.userData.isAnimal = true;
@@ -1667,39 +1497,31 @@
             animalGroup.userData.yaw = Math.random() * Math.PI * 2;
             animalGroup.rotation.y = animalGroup.userData.yaw;
             animalGroup.userData.targetYaw = animalGroup.userData.yaw;
-            animalGroup.userData.speed = 7.5; // 従来(15.0)の半分
+            animalGroup.userData.speed = 7.5;
             animalGroup.userData.canStepUp = true;
-
             const furMat = createFurMaterial(color || '#c8935a');
             const darkMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
-
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.34, 0.6), furMat);
             body.position.set(0, 0.4, 0);
             animalGroup.add(body);
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.28, 0.28), furMat);
             head.position.set(0, 0.58, 0.38);
             animalGroup.add(head);
-            // マズル(鼻先)
             const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.14), furMat);
             muzzle.position.set(0, -0.06, 0.18);
             head.add(muzzle);
             const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, 0.04), darkMat);
             nose.position.set(0, 0, 0.09);
             muzzle.add(nose);
-            // 垂れ耳
             const earGeo = new THREE.BoxGeometry(0.06, 0.18, 0.12);
             const ear1 = new THREE.Mesh(earGeo, furMat); ear1.position.set(0.13, 0.06, -0.02); ear1.rotation.z = -0.3;
             const ear2 = new THREE.Mesh(earGeo, furMat); ear2.position.set(-0.13, 0.06, -0.02); ear2.rotation.z = 0.3;
             head.add(ear1, ear2);
-            // 愛らしい顔になるよう、まん丸の目を付ける
             addCuteEyes(head, { xOffset: 0.09, y: 0.02, z: 0.14, eyeRadius: 0.055, pupilRadius: 0.04 });
-            // 微笑んでいるような口をマズルに付ける
             addSmileMouth(muzzle, { y: -0.03, z: 0.075, radius: 0.05, tube: 0.01 });
-            // しっぽ(元気に立った感じ)
             const tail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.08), furMat);
             tail.position.set(0, 0.5, -0.32); tail.rotation.x = -Math.PI / 4;
             animalGroup.add(tail);
-
             const legs = [];
             const legPositions = [
                 {x: 0.14, y: 0.24, z: 0.2}, {x: -0.14, y: 0.24, z: 0.2},
@@ -1715,86 +1537,52 @@
                 legs.push(pivot);
             });
             animalGroup.userData.legs = legs;
-
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.75, 0.85), invisibleHitboxMat);
             hitbox.position.set(0, 0.4, 0);
             animalGroup.add(hitbox);
-            animalGroup.userData.hitboxMesh = hitbox;
-            blockMeshes.push(hitbox);
             scene.add(animalGroup);
             animals.push(animalGroup);
         }
-        // ==================== 熱帯魚(水の中だけに存在できる。水の外では消える) ====================
         function spawnFish(x, y, z) {
             const key = `${x},${y},${z}`;
-            const cellMesh = activeBlocks.get(key);
-            if (!cellMesh || !cellMesh.userData.isWater) return; // 水の中にしか置けない
+            const cellMesh = activeBlocks[key];
+            if (!cellMesh || !cellMesh.userData.isWater) return;
             const fishGroup = new THREE.Group();
             fishGroup.position.set(x, y, z);
             fishGroup.userData.isFish = true;
             fishGroup.userData.dir = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5) * 0.6, (Math.random() - 0.5)).normalize();
             fishGroup.userData.wanderTimer = Math.random() * 2 + 1;
             fishGroup.userData.speed = 0.5;
-
             const bodyMat = new THREE.MeshLambertMaterial({ color: 0xff7f27 });
             const whiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
             const finMat = new THREE.MeshLambertMaterial({ color: 0xe85d10 });
-
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.32), bodyMat);
             fishGroup.add(body);
-            // 白い縞模様(カクレクマノミらしさ)
             const stripe1 = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.17, 0.04), whiteMat); stripe1.position.set(0, 0, 0.04);
             const stripe2 = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.17, 0.04), whiteMat); stripe2.position.set(0, 0, -0.08);
             fishGroup.add(stripe1, stripe2);
-            // 尾びれ
             const tail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.16, 0.14), finMat);
             tail.position.set(0, 0, -0.22);
             fishGroup.add(tail);
-            // 背びれ・腹びれ
             const dorsalFin = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, 0.14), finMat);
             dorsalFin.position.set(0, 0.11, 0);
             fishGroup.add(dorsalFin);
             const ventralFin = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.1), finMat);
             ventralFin.position.set(0, -0.1, 0.02);
             fishGroup.add(ventralFin);
-            // 胸びれ(横)
             const pectoralGeo = new THREE.BoxGeometry(0.1, 0.06, 0.02);
             const pFin1 = new THREE.Mesh(pectoralGeo, finMat); pFin1.position.set(0.1, -0.02, 0.08);
             const pFin2 = new THREE.Mesh(pectoralGeo, finMat); pFin2.position.set(-0.1, -0.02, 0.08);
             fishGroup.add(pFin1, pFin2);
-            // 頭(丸くして、まん丸のかわいい目をつける)
             const head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), bodyMat);
             head.position.set(0, 0, 0.16);
             fishGroup.add(head);
             addCuteEyes(head, { xOffset: 0.05, y: 0.01, z: 0.06, eyeRadius: 0.035, pupilRadius: 0.024 });
-            // 微笑んでいるような口を付ける
             addSmileMouth(head, { y: -0.03, z: 0.07, radius: 0.035, tube: 0.008 });
-
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.5), invisibleHitboxMat);
             fishGroup.add(hitbox);
-            fishGroup.userData.hitboxMesh = hitbox;
-            blockMeshes.push(hitbox);
-
             scene.add(fishGroup);
             fishes.push(fishGroup);
-        }
-        // ==================== トロッコ(レール専用の乗り物) ====================
-        function createMinecartBodyMaterial() {
-            // 本家Minecraftのトロッコを意識した、石っぽいまだら模様のボディ用テクスチャ
-            const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#8f8f8f'; ctx.fillRect(0, 0, 32, 32);
-            ctx.fillStyle = 'rgba(0,0,0,0.18)';
-            for (let i = 0; i < 26; i++) {
-                ctx.fillRect(Math.random() * 32, Math.random() * 32, Math.random() * 4 + 2, Math.random() * 4 + 2);
-            }
-            ctx.fillStyle = 'rgba(255,255,255,0.12)';
-            for (let i = 0; i < 14; i++) {
-                ctx.fillRect(Math.random() * 32, Math.random() * 32, Math.random() * 3 + 1, Math.random() * 3 + 1);
-            }
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
-            return new THREE.MeshLambertMaterial({ map: tex });
         }
         function spawnMinecart(x, y, z) {
             const group = new THREE.Group();
@@ -1805,60 +1593,33 @@
             group.userData.moving = false;
             group.userData.riding = false;
             group.userData.promptDismissed = false;
-
-            // 見た目を本家Minecraftのトロッコに寄せたデザイン(石っぽいボディ + 上縁の明るいフチ +
-            // 四隅から外側に張り出す暗いフレーム脚)。レール移動・乗車判定などの挙動には一切手を加えていない。
-            const cartMat = createMinecartBodyMaterial();
-            const rimMat = new THREE.MeshLambertMaterial({ color: 0xd4d4d4 });
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0x45495a });
-            const footMat = new THREE.MeshLambertMaterial({ color: 0x232323 });
-            const baseY = -0.35; // レールのマス(セル下寄り)に合わせて低めに配置
-
-            const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.6), floorMat); bottom.position.set(0, baseY, 0);
+            const cartMat = new THREE.MeshLambertMaterial({ color: 0x5a4632 });
+            const metalMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            const baseY = -0.35;
+            const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.6), cartMat); bottom.position.set(0, baseY, 0);
             const wallFront = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.08), cartMat); wallFront.position.set(0, baseY + 0.2, 0.3);
             const wallBack = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.08), cartMat); wallBack.position.set(0, baseY + 0.2, -0.3);
             const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.6), cartMat); wallLeft.position.set(0.4, baseY + 0.2, 0);
             const wallRight = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.6), cartMat); wallRight.position.set(-0.4, baseY + 0.2, 0);
             group.add(bottom, wallFront, wallBack, wallLeft, wallRight);
-
-            // 壁の上端に明るいフチを付ける
-            const rimTopY = baseY + 0.375;
-            const rimFront = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.05, 0.1), rimMat); rimFront.position.set(0, rimTopY, 0.3);
-            const rimBack = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.05, 0.1), rimMat); rimBack.position.set(0, rimTopY, -0.3);
-            const rimLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.64), rimMat); rimLeft.position.set(0.4, rimTopY, 0);
-            const rimRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.64), rimMat); rimRight.position.set(-0.4, rimTopY, 0);
-            group.add(rimFront, rimBack, rimLeft, rimRight);
-
-            // 四隅から外側・下方向へ張り出す暗いフレーム脚(本家トロッコの特徴的な脚)
-            const footGeo = new THREE.BoxGeometry(0.12, 0.22, 0.12);
-            [
-                { x: 0.42, z: 0.32, rz: -0.35 },
-                { x: -0.42, z: 0.32, rz: 0.35 },
-                { x: 0.42, z: -0.32, rz: -0.35 },
-                { x: -0.42, z: -0.32, rz: 0.35 },
-            ].forEach(fp => {
-                const foot = new THREE.Mesh(footGeo, footMat);
-                foot.position.set(fp.x, baseY - 0.16, fp.z);
-                foot.rotation.z = fp.rz;
-                group.add(foot);
+            const wheelGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.06, 8);
+            [{x:0.35,z:0.22}, {x:-0.35,z:0.22}, {x:0.35,z:-0.22}, {x:-0.35,z:-0.22}].forEach(wp => {
+                const wheel = new THREE.Mesh(wheelGeo, metalMat);
+                wheel.rotation.x = Math.PI / 2;
+                wheel.position.set(wp.x, baseY - 0.05, wp.z);
+                group.add(wheel);
             });
-
             const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.7), invisibleHitboxMat);
             hitbox.position.set(0, baseY + 0.2, 0);
             group.add(hitbox);
-            group.userData.hitboxMesh = hitbox;
-            blockMeshes.push(hitbox);
-
             scene.add(group);
             minecarts.push(group);
             return group;
         }
         function getRailNeighbors(x, y, z) {
-            // 水平方向の各隣接マスについて、同じ高さのレールを最優先で探し、
-            // 無ければ1段上・1段下のレールも探すことで、レールが1ブロックの高さを登り降りできるようにする。
             const dirs = [{ dx: 1, dz: 0 }, { dx: -1, dz: 0 }, { dx: 0, dz: 1 }, { dx: 0, dz: -1 }];
             const isRailBlock = (nx, ny, nz) => {
-                const m = activeBlocks.get(`${nx},${ny},${nz}`);
+                const m = activeBlocks[`${nx},${ny},${nz}`];
                 return m && m.userData && m.userData.blockId === 101;
             };
             const result = [];
@@ -1866,9 +1627,9 @@
                 if (isRailBlock(x + d.dx, y, z + d.dz)) {
                     result.push({ dx: d.dx, dz: d.dz, dy: 0 });
                 } else if (isRailBlock(x + d.dx, y + 1, z + d.dz)) {
-                    result.push({ dx: d.dx, dz: d.dz, dy: 1 }); // 上り坂
+                    result.push({ dx: d.dx, dz: d.dz, dy: 1 });
                 } else if (isRailBlock(x + d.dx, y - 1, z + d.dz)) {
-                    result.push({ dx: d.dx, dz: d.dz, dy: -1 }); // 下り坂
+                    result.push({ dx: d.dx, dz: d.dz, dy: -1 });
                 }
             });
             return result;
@@ -1877,7 +1638,7 @@
             const data = cart.userData;
             if (data.moving) return;
             const neighbors = getRailNeighbors(data.cellX, data.cellY, data.cellZ);
-            if (neighbors.length === 0) return; // レールに繋がっていないので動かない
+            if (neighbors.length === 0) return;
             let chosen = neighbors.find(n => n.dx === dir.dx && n.dz === dir.dz);
             if (!chosen) {
                 const reverseDir = { dx: -data.dir.dx, dz: -data.dir.dz };
@@ -1893,7 +1654,7 @@
             const cart = currentRidingCart;
             if (!cart) return;
             const data = cart.userData;
-            const speed = 30.0; // セル/秒(従来の3.0の10倍)
+            const speed = 30.0;
             if (!data.moving) {
                 if (moveForward) tryStartMinecartMove(cart, data.dir);
                 else if (moveBackward) tryStartMinecartMove(cart, { dx: -data.dir.dx, dz: -data.dir.dz });
@@ -1911,7 +1672,7 @@
                     if (moveForward || moveBackward) tryStartMinecartMove(cart, data.dir);
                 }
             }
-            playerGroup.position.set(cart.position.x, cart.position.y - 0.75, cart.position.z);
+            playerGroup.position.set(cart.position.x, cart.position.y + 0.9, cart.position.z);
         }
         function checkMinecartProximity() {
             if (currentRidingCart || isCartPromptOpen || isInventoryOpen || isRespawnPromptOpen) return;
@@ -1969,7 +1730,6 @@
             hideCartPrompt();
             lockPointer();
         });
-        // ==================== リスポーン ====================
         let isRespawnPromptOpen = false;
         function showRespawnPrompt() {
             if (isRespawnPromptOpen || isCartPromptOpen || isInventoryOpen) return;
@@ -1984,7 +1744,7 @@
             document.getElementById('respawn-prompt-overlay').style.display = 'none';
         }
         function respawnPlayer() {
-            if (currentRidingCart) exitMinecart(); // 乗車中なら先に強制的に降ろす
+            if (currentRidingCart) exitMinecart();
             const groundY = getTerrainHeight(SPAWN_X, SPAWN_Z);
             playerGroup.position.set(SPAWN_X, groundY + 10, SPAWN_Z);
             velocity.set(0, 0, 0);
@@ -2007,109 +1767,11 @@
             const dirs = [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]];
             const matArr = [];
             for (let i = 0; i < 6; i++) {
-                const nBlock = activeBlocks.get(`${x + dirs[i][0]},${y + dirs[i][1]},${z + dirs[i][2]}`);
+                const nBlock = activeBlocks[`${x + dirs[i][0]},${y + dirs[i][1]},${z + dirs[i][2]}`];
                 if (nBlock && nBlock.userData.isWater) matArr.push(new THREE.MeshBasicMaterial({ visible: false }));
                 else matArr.push(ALL_BLOCKS_MAP[99].material);
             }
             mesh.material = matArr;
-        }
-        // ==================== 基本ブロック(草・土・石・パステルブロック等)のインスタンス描画 ====================
-        // これまでは「ブロック1個 = Meshオブジェクト1個 = 描画コール1回」だったため、
-        // 地形が広がるほど描画コール数が数千〜数万に増えて重くなっていた。
-        // 家具・水・動物・トロッコ・魚は今まで通り個別メッシュのままにして挙動を一切変えず、
-        // それ以外の「type:'basic'かつ水ではないブロック」だけをブロックの種類ごとに
-        // 1つのTHREE.InstancedMeshにまとめることで、見た目を変えずに描画コール数を大幅に減らす。
-        // (種類ごとの描画コールになるので、例えば草・土・石だけなら地形が何マスに広がっても3回で済む)
-        const instancedBlockTypes = new Map(); // blockId -> { mesh, capacity, keyByIndex, indexByKey }
-        const instanceDummy = new THREE.Object3D();
-        const instanceMatrixHelper = new THREE.Matrix4();
-        function createInstancedType(blockInfo) {
-            const initialCapacity = 4096;
-            const instMesh = new THREE.InstancedMesh(boxGeometry, blockInfo.material, initialCapacity);
-            instMesh.count = 0;
-            if (instMesh.instanceMatrix.setUsage) instMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-            // InstancedMeshは既定だと(全インスタンスの広がりを考慮しない)原点付近の狭い範囲でしか
-            // 視錐台カリングの判定ができず、離れた場所のブロックが誤って描画されなくなってしまうため、
-            // このメッシュについてはカリングを無効化して常に描画対象にする(挙動維持のための安全策)。
-            instMesh.frustumCulled = false;
-            instMesh.userData.isBasicBlockInstances = true;
-            instMesh.userData.blockId = blockInfo.id;
-            scene.add(instMesh);
-            const entry = { mesh: instMesh, capacity: initialCapacity, keyByIndex: [], indexByKey: new Map() };
-            instancedBlockTypes.set(blockInfo.id, entry);
-            blockMeshes.push(instMesh); // レイキャスト(破壊・設置判定)対象に登録
-            return entry;
-        }
-        function growInstancedType(entry) {
-            const oldMesh = entry.mesh;
-            const newCapacity = entry.capacity * 2;
-            const newMesh = new THREE.InstancedMesh(boxGeometry, oldMesh.material, newCapacity);
-            if (newMesh.instanceMatrix.setUsage) newMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-            newMesh.frustumCulled = false;
-            newMesh.userData.isBasicBlockInstances = true;
-            newMesh.userData.blockId = oldMesh.userData.blockId;
-            for (let i = 0; i < oldMesh.count; i++) {
-                oldMesh.getMatrixAt(i, instanceMatrixHelper);
-                newMesh.setMatrixAt(i, instanceMatrixHelper);
-            }
-            newMesh.count = oldMesh.count;
-            scene.remove(oldMesh);
-            scene.add(newMesh);
-            const idx = blockMeshes.indexOf(oldMesh);
-            if (idx > -1) blockMeshes[idx] = newMesh; else blockMeshes.push(newMesh);
-            entry.mesh = newMesh;
-            entry.capacity = newCapacity;
-        }
-        function addInstancedBlock(x, y, z, blockInfo, key) {
-            let entry = instancedBlockTypes.get(blockInfo.id);
-            if (!entry) entry = createInstancedType(blockInfo);
-            if (entry.mesh.count >= entry.capacity) growInstancedType(entry);
-            const index = entry.mesh.count;
-            instanceDummy.position.set(x, y, z);
-            instanceDummy.updateMatrix();
-            entry.mesh.setMatrixAt(index, instanceDummy.matrix);
-            entry.mesh.instanceMatrix.needsUpdate = true;
-            entry.mesh.count = index + 1;
-            entry.keyByIndex[index] = key;
-            entry.indexByKey.set(key, index);
-        }
-        function removeInstancedBlock(blockId, key) {
-            const entry = instancedBlockTypes.get(blockId);
-            if (!entry) return;
-            const index = entry.indexByKey.get(key);
-            if (index === undefined) return;
-            const lastIndex = entry.mesh.count - 1;
-            if (index !== lastIndex) {
-                // 削除するインスタンスの位置に、末尾のインスタンスを詰め替える(swap-remove)
-                entry.mesh.getMatrixAt(lastIndex, instanceMatrixHelper);
-                entry.mesh.setMatrixAt(index, instanceMatrixHelper);
-                const lastKey = entry.keyByIndex[lastIndex];
-                entry.keyByIndex[index] = lastKey;
-                entry.indexByKey.set(lastKey, index);
-            }
-            entry.keyByIndex.pop();
-            entry.indexByKey.delete(key);
-            entry.mesh.count = lastIndex;
-            entry.mesh.instanceMatrix.needsUpdate = true;
-        }
-        function makeBasicBlockProxy(x, y, z, blockInfo, key) {
-            // activeBlocksや当たり判定・水流・レール判定などの既存ロジックは、格納されているのが
-            // 本物のTHREE.Meshかどうかを気にせず「.userData」「.position」だけを見て動いている。
-            // そのため、実体は持たない(=画面には直接描画されない)軽量なプロキシオブジェクトを
-            // 代わりに格納することで、それらの既存ロジックを一切変更せずに済むようにしている。
-            return {
-                isBasicBlockProxy: true,
-                position: { x, y, z },
-                userData: { mainKey: key, blockId: blockInfo.id, isWater: false, isFurniture: false },
-            };
-        }
-        function getKeyFromInstancedHit(intersect) {
-            const obj = intersect.object;
-            if (!obj || !obj.isInstancedMesh || !obj.userData.isBasicBlockInstances) return null;
-            const entry = instancedBlockTypes.get(obj.userData.blockId);
-            if (!entry) return null;
-            const key = entry.keyByIndex[intersect.instanceId];
-            return key !== undefined ? key : null;
         }
         function addBlockMesh(x, y, z, blockInfo, yaw = 0, waterLevel = 3) {
             if (blockInfo.type === 'animal') {
@@ -2128,43 +1790,36 @@
                 return;
             }
             const key = `${x},${y},${z}`;
-            if (activeBlocks.get(key) && activeBlocks.get(key).userData.isWater && !blockInfo.isWater) {
+            if (activeBlocks[key] && activeBlocks[key].userData.isWater && !blockInfo.isWater) {
                 removeBlockMesh(key);
-            } else if (activeBlocks.get(key)) return;
+            } else if (activeBlocks[key]) return;
             let mesh;
             if (blockInfo.type === 'furniture') {
                 const { group, blocksToOccupy } = createFurniture(blockInfo, x, y, z, yaw);
-                for (const k of blocksToOccupy) { if (activeBlocks.get(k)) return; }
+                for (const k of blocksToOccupy) { if (activeBlocks[k]) return; }
                 mesh = group; scene.add(mesh);
                 mesh.children.forEach(child => {
                     if (child.material === invisibleHitboxMat) blockMeshes.push(child);
                 });
-                // ドアは毎フレームの開閉判定のため専用リストにも登録しておく
-                if (mesh.userData.isDoor) doorMeshes.push(mesh);
-                for (const k of blocksToOccupy) { activeBlocks.set(k, mesh); }
-            } else if (blockInfo.isWater) {
-                mesh = new THREE.Mesh(boxGeometry, []);
-                mesh.position.set(x, y, z); mesh.userData.mainKey = key;
-                mesh.userData.isWater = true;
-                mesh.userData.blockId = blockInfo.id;
-                mesh.userData.waterLevel = waterLevel;
-                waterUpdateQueue.add(key);
-                scene.add(mesh); blockMeshes.push(mesh); activeBlocks.set(key, mesh);
+                for (const k of blocksToOccupy) { activeBlocks[k] = mesh; }
             } else {
-                // 水以外の通常ブロックはInstancedMeshにまとめて描画するので、
-                // シーンには追加せず、既存ロジック用の軽量なプロキシだけをactiveBlocksに登録する。
-                addInstancedBlock(x, y, z, blockInfo, key);
-                mesh = makeBasicBlockProxy(x, y, z, blockInfo, key);
-                activeBlocks.set(key, mesh);
+                if (blockInfo.isWater) mesh = new THREE.Mesh(boxGeometry, []);
+                else mesh = new THREE.Mesh(boxGeometry, new THREE.MeshLambertMaterial({ map: blockInfo.map, transparent: blockInfo.transparent, alphaTest: blockInfo.transparent ? 0.5 : 0 }));
+                mesh.position.set(x, y, z); mesh.userData.mainKey = key;
+                mesh.userData.isWater = blockInfo.isWater || false;
+                mesh.userData.blockId = blockInfo.id;
+                if (blockInfo.isWater) {
+                    mesh.userData.waterLevel = waterLevel;
+                    waterUpdateQueue.add(key);
+                }
+                scene.add(mesh); blockMeshes.push(mesh); activeBlocks[key] = mesh;
             }
-            // レールの自動接続更新
             if (blockInfo.id === 101) {
                 updateRailOrientation(x, y, z);
                 updateRailOrientation(x+1, y, z);
                 updateRailOrientation(x-1, y, z);
                 updateRailOrientation(x, y, z+1);
                 updateRailOrientation(x, y, z-1);
-                // 1段上/1段下にある斜めレールも、新しく置いたレールに気付いて傾きを更新できるようにする
                 updateRailOrientation(x+1, y+1, z);
                 updateRailOrientation(x-1, y+1, z);
                 updateRailOrientation(x, y+1, z+1);
@@ -2174,7 +1829,6 @@
                 updateRailOrientation(x, y-1, z+1);
                 updateRailOrientation(x, y-1, z-1);
             }
-            // フェンスの自動接続更新(90度の曲がり角・T字・十字に対応。色違いのフェンスも対象)
             if (blockInfo.subtype === 'fence') {
                 updateFenceConnections(x, y, z);
                 updateFenceConnections(x+1, y, z);
@@ -2185,7 +1839,7 @@
             const dirs = [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]];
             for (let d of dirs) {
                 const nKey = `${x+d[0]},${y+d[1]},${z+d[2]}`;
-                const nMesh = activeBlocks.get(nKey);
+                const nMesh = activeBlocks[nKey];
                 if (nMesh && nMesh.userData.isWater) {
                     waterUpdateQueue.add(nKey); updateWaterFaces(x+d[0], y+d[1], z+d[2], nMesh);
                 }
@@ -2193,7 +1847,7 @@
             if (blockInfo.isWater) updateWaterFaces(x, y, z, mesh);
         }
         function removeBlockMesh(key) {
-            const mesh = activeBlocks.get(key);
+            const mesh = activeBlocks[key];
             if (mesh) {
                 const wasWater = mesh.userData && mesh.userData.isWater;
                 scene.remove(mesh);
@@ -2202,26 +1856,17 @@
                         const index = blockMeshes.indexOf(child);
                         if (index > -1) blockMeshes.splice(index, 1);
                     });
-                    if (mesh.userData.isDoor) {
-                        const doorIndex = doorMeshes.indexOf(mesh);
-                        if (doorIndex > -1) doorMeshes.splice(doorIndex, 1);
-                    }
-                } else if (mesh.isBasicBlockProxy) {
-                    // InstancedMesh側からも該当インスタンスを取り除く(挙動を変えず描画コールだけ減らす対応)
-                    removeInstancedBlock(mesh.userData.blockId, key);
                 } else {
                     const index = blockMeshes.indexOf(mesh);
                     if (index > -1) blockMeshes.splice(index, 1);
                 }
                 const [x, y, z] = key.split(',').map(Number);
-                activeBlocks.forEach((v, k) => { if (v === mesh) activeBlocks.delete(k); });
-                // レールの自動接続解除
+                Object.keys(activeBlocks).forEach(k => { if (activeBlocks[k] === mesh) delete activeBlocks[k]; });
                 if (mesh.userData && mesh.userData.blockId === 101) {
                     updateRailOrientation(x+1, y, z);
                     updateRailOrientation(x-1, y, z);
                     updateRailOrientation(x, y, z+1);
                     updateRailOrientation(x, y, z-1);
-                    // 1段上/1段下の斜めレールも、繋がっていたレールが消えたことに気付いて傾きを更新できるようにする
                     updateRailOrientation(x+1, y+1, z);
                     updateRailOrientation(x-1, y+1, z);
                     updateRailOrientation(x, y+1, z+1);
@@ -2231,7 +1876,6 @@
                     updateRailOrientation(x, y-1, z+1);
                     updateRailOrientation(x, y-1, z-1);
                 }
-                // フェンスの自動接続解除(色違いのフェンスも対象)
                 if (mesh.userData && mesh.userData.isFence) {
                     updateFenceConnections(x+1, y, z);
                     updateFenceConnections(x-1, y, z);
@@ -2242,25 +1886,21 @@
                 const touchedWaterKeys = [];
                 for (let d of dirs) {
                     const nKey = `${x+d[0]},${y+d[1]},${z+d[2]}`;
-                    const nMesh = activeBlocks.get(nKey);
+                    const nMesh = activeBlocks[nKey];
                     if (nMesh && nMesh.userData.isWater) {
                         waterUpdateQueue.add(nKey); updateWaterFaces(x+d[0], y+d[1], z+d[2], nMesh);
                         touchedWaterKeys.push(nKey);
                     }
                 }
-                // 壊したのが水以外のブロック(=囲いの壁など)で、隣に水たまりがあった場合は
-                // つながっている水全体を「流れ出て地面に吸い込まれる」ように排水させる
                 if (!wasWater && touchedWaterKeys.length > 0) {
                     triggerWaterDrainFrom(touchedWaterKeys);
                 }
             }
         }
         function triggerWaterDrainFrom(startKeys) {
-            // 排水の起点(壊された壁に隣接する水)からBFSで繋がっている水を辿り、
-            // 壁に近いマスから順に少しずつ遅れて排水させることで「流れ出ていく」演出にする
             const visited = new Set();
             let frontier = startKeys.filter(k => {
-                const m = activeBlocks.get(k);
+                const m = activeBlocks[k];
                 return m && m.userData.isWater && m.userData.drainingTick === undefined;
             });
             let waveDelay = 0;
@@ -2270,7 +1910,7 @@
                 for (const key of frontier) {
                     if (visited.has(key)) continue;
                     visited.add(key);
-                    const mesh = activeBlocks.get(key);
+                    const mesh = activeBlocks[key];
                     if (!mesh || !mesh.userData.isWater || mesh.userData.drainingTick !== undefined) continue;
                     mesh.userData.drainingTick = 2 + waveDelay;
                     waterUpdateQueue.add(key);
@@ -2278,7 +1918,7 @@
                     for (const d of dirs) {
                         const nKey = `${x+d[0]},${y+d[1]},${z+d[2]}`;
                         if (visited.has(nKey)) continue;
-                        const nMesh = activeBlocks.get(nKey);
+                        const nMesh = activeBlocks[nKey];
                         if (nMesh && nMesh.userData.isWater && nMesh.userData.drainingTick === undefined) nextFrontier.push(nKey);
                     }
                 }
@@ -2287,14 +1927,13 @@
             }
         }
         function isWaterBodyEnclosed(startX, startY, startZ) {
-            // まず繋がっている水のかたまり(水本体)を洗い出す
             const dirs6 = [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]];
             const waterVisited = new Set();
             let waterQueue = [`${startX},${startY},${startZ}`];
             while (waterQueue.length > 0) {
                 const key = waterQueue.pop();
                 if (waterVisited.has(key)) continue;
-                const mesh = activeBlocks.get(key);
+                const mesh = activeBlocks[key];
                 if (!mesh || !mesh.userData.isWater) continue;
                 waterVisited.add(key);
                 const [x, y, z] = key.split(',').map(Number);
@@ -2303,10 +1942,7 @@
                     if (!waterVisited.has(nKey)) waterQueue.push(nKey);
                 }
             }
-            if (waterVisited.size === 0) return true; // 水がもう無い(判定不要)
-            // 水本体に隣接する「何も無いマス」から、水の高さと同じ層だけを横方向にたどり、
-            // 壁で完全に囲まれた有限の範囲に収まっているかを調べる。
-            // (水は横方向にしか広がらないゲーム内の仕様に合わせ、上下は追わない=天井の有無は問わない)
+            if (waterVisited.size === 0) return true;
             const dirs4 = [[1,0,0], [-1,0,0], [0,0,1], [0,0,-1]];
             const airVisited = new Set();
             let airQueue = [];
@@ -2315,37 +1951,35 @@
                 for (const d of dirs4) {
                     const nKey = `${x+d[0]},${y},${z+d[2]}`;
                     if (waterVisited.has(nKey) || airVisited.has(nKey)) return;
-                    if (!activeBlocks.get(nKey)) airQueue.push(nKey);
+                    if (!activeBlocks[nKey]) airQueue.push(nKey);
                 }
             });
-            const MAX_AIR_CELLS = 300; // これを超えて広がるなら「開放地」とみなして囲いなし判定にする
+            const MAX_AIR_CELLS = 300;
             let explored = 0;
             while (airQueue.length > 0) {
                 const key = airQueue.pop();
                 if (airVisited.has(key)) continue;
                 airVisited.add(key);
                 explored++;
-                if (explored > MAX_AIR_CELLS) return false; // 開放的すぎる = 囲われていない
+                if (explored > MAX_AIR_CELLS) return false;
                 const [x, y, z] = key.split(',').map(Number);
                 for (const d of dirs4) {
                     const nKey = `${x+d[0]},${y},${z+d[2]}`;
                     if (waterVisited.has(nKey) || airVisited.has(nKey)) continue;
-                    if (!activeBlocks.get(nKey)) airQueue.push(nKey); // 空きマスのみ先へ進む(固体ブロックは壁として止まる)
+                    if (!activeBlocks[nKey]) airQueue.push(nKey);
                 }
             }
-            return true; // 空きスペースの広がりが有限に収まった = 囲われている
+            return true;
         }
         function checkWaterEnclosure(x, y, z) {
             const key = `${x},${y},${z}`;
-            const mesh = activeBlocks.get(key);
-            if (!mesh || !mesh.userData.isWater) return; // 既に無くなっている/変化した
+            const mesh = activeBlocks[key];
+            if (!mesh || !mesh.userData.isWater) return;
             if (!isWaterBodyEnclosed(x, y, z)) {
-                // 囲いの中ではない(開けた場所の)水なので、地面に染み込ませて消す
                 triggerWaterDrainFrom([key]);
             }
         }
         function scheduleWaterEnclosureCheck(x, y, z) {
-            // 水が広がりきるまで少し待ってから、囲われているかどうかを判定する
             setTimeout(() => { checkWaterEnclosure(x, y, z); }, 1200);
         }
         const raycaster = new THREE.Raycaster();
@@ -2354,68 +1988,46 @@
             if (!isLocked) return;
             isSwinging = true; swingTime = 0;
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-            // blockMeshesには通常ブロック・家具の当たり判定に加えて、動物/トロッコ/魚の当たり判定メッシュも
-            // 生成時点で登録済みなので、毎フレーム(クリックごとに)配列をコピー・再構築する必要がない。
-            const checkTargets = blockMeshes;
-
+            let checkTargets = [...blockMeshes];
+            animals.forEach(a => a.children.forEach(c => { if(c.material === invisibleHitboxMat) checkTargets.push(c); }));
+            minecarts.forEach(m => m.children.forEach(c => { if(c.material === invisibleHitboxMat) checkTargets.push(c); }));
+            fishes.forEach(f => f.children.forEach(c => { if(c.material === invisibleHitboxMat) checkTargets.push(c); }));
             const intersects = raycaster.intersectObjects(checkTargets, false);
             if (intersects.length > 0 && intersects[0].distance <= 8) {
                 const intersect = intersects[0];
-                // InstancedMeshにまとめた通常ブロックがヒットした場合は、
-                // instanceIdから元のブロック座標(key)を逆引きする。
-                const instancedKey = getKeyFromInstancedHit(intersect);
                 if (event.button === 0) {
-                    if (instancedKey) {
-                        removeBlockMesh(instancedKey);
-                    } else {
                     let obj = intersect.object;
                     while (obj && !obj.userData.isAnimal && !obj.userData.isMinecart && !obj.userData.isFish && !obj.userData.mainKey) { obj = obj.parent; }
-
                     if (obj && obj.userData.isAnimal) {
                         scene.remove(obj);
                         animals.splice(animals.indexOf(obj), 1);
-                        removeFromBlockMeshes(obj.userData.hitboxMesh);
                     } else if (obj && obj.userData.isMinecart) {
                         if (!obj.userData.riding) {
                             scene.remove(obj);
                             minecarts.splice(minecarts.indexOf(obj), 1);
-                            removeFromBlockMeshes(obj.userData.hitboxMesh);
                         }
                     } else if (obj && obj.userData.isFish) {
                         scene.remove(obj);
                         fishes.splice(fishes.indexOf(obj), 1);
-                        removeFromBlockMeshes(obj.userData.hitboxMesh);
                     } else if (obj && obj.userData.mainKey) {
                         removeBlockMesh(obj.userData.mainKey);
                     }
-                    }
                 } else if (event.button === 2) {
                     const normal = intersect.face.normal;
-                    let p;
-                    if (instancedKey) {
-                        const [kx, ky, kz] = instancedKey.split(',').map(Number);
-                        p = { x: kx, y: ky, z: kz };
-                    } else {
-                        p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
+                    let p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
                             intersect.object.parent.position.clone().add(intersect.object.position) : intersect.object.position;
-                    }
-
                     const newX = Math.round(p.x + normal.x); const newY = Math.round(p.y + normal.y); const newZ = Math.round(p.z + normal.z);
                     const selectedBlock = hotbarItems[currentSlotIndex];
                     if (selectedBlock) {
                         if (selectedBlock.type === 'cart') {
-                            // レール(id:101)の上をクリックした場合はそのレールのマス目にそのままトロッコを置く。
-                            // それ以外の場所では通常のブロックと同じく面の上に置く(その場合は動かない飾りのトロッコになる)。
                             const clickedKey = `${Math.round(p.x)},${Math.round(p.y)},${Math.round(p.z)}`;
-                            const clickedMesh = activeBlocks.get(clickedKey);
+                            const clickedMesh = activeBlocks[clickedKey];
                             const isRailClicked = clickedMesh && clickedMesh.userData && clickedMesh.userData.blockId === 101;
                             if (isRailClicked) addBlockMesh(Math.round(p.x), Math.round(p.y), Math.round(p.z), selectedBlock);
                             else addBlockMesh(newX, newY, newZ, selectedBlock);
                         } else if (selectedBlock.type === 'fish') {
-                            // 熱帯魚は水の中にしか置けないので、クリックしたマスそのものが水かどうかで判定する
-                            // (トロッコがレールのマスに直接置かれるのと同じ考え方)
                             const clickedKey = `${Math.round(p.x)},${Math.round(p.y)},${Math.round(p.z)}`;
-                            const clickedMesh = activeBlocks.get(clickedKey);
+                            const clickedMesh = activeBlocks[clickedKey];
                             if (clickedMesh && clickedMesh.userData && clickedMesh.userData.isWater) {
                                 addBlockMesh(Math.round(p.x), Math.round(p.y), Math.round(p.z), selectedBlock);
                             }
@@ -2423,7 +2035,6 @@
                             const playerYaw = cameraYaw;
                             const normalizedYaw = (playerYaw % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
                             const exactYaw = (Math.round(normalizedYaw / (Math.PI / 2)) % 4 * (Math.PI / 2) + Math.PI) % (Math.PI * 2);
-
                             const waterLvl = selectedBlock.isWater ? 3 : 0;
                             addBlockMesh(newX, newY, newZ, selectedBlock, exactYaw, waterLvl);
                             if (selectedBlock.isWater) scheduleWaterEnclosureCheck(newX, newY, newZ);
@@ -2442,11 +2053,10 @@
             const bMinX = Math.round(pMinX - 0.5), bMaxX = Math.round(pMaxX + 0.5);
             const bMinY = Math.round(pMinY - 0.5), bMaxY = Math.round(pMaxY + 0.5);
             const bMinZ = Math.round(pMinZ - 0.5), bMaxZ = Math.round(pMaxZ + 0.5);
-
             for (let x = bMinX; x <= bMaxX; x++) {
                 for (let y = bMinY; y <= bMaxY; y++) {
                     for (let z = bMinZ; z <= bMaxZ; z++) {
-                        const mesh = activeBlocks.get(`${x},${y},${z}`);
+                        const mesh = activeBlocks[`${x},${y},${z}`];
                         if (mesh && !mesh.userData.isWater) {
                             if (mesh.userData && mesh.userData.isFurniture && !mesh.userData.isFence) {
                                 if (mesh.userData.isDoor && mesh.userData.isOpen) continue;
@@ -2468,13 +2078,10 @@
             const bMinX = Math.round(pMinX - 0.5), bMaxX = Math.round(pMaxX + 0.5);
             const bMinY = Math.round(pMinY - 0.5), bMaxY = Math.round(pMaxY + 0.5);
             const bMinZ = Math.round(pMinZ - 0.5), bMaxZ = Math.round(pMaxZ + 0.5);
-
             for (let x = bMinX; x <= bMaxX; x++) {
                 for (let y = bMinY; y <= bMaxY; y++) {
                     for (let z = bMinZ; z <= bMaxZ; z++) {
-                        const mesh = activeBlocks.get(`${x},${y},${z}`);
-                        // 通常の家具(ベッド・チェスト等)は今まで通り動物をすり抜けさせるが、
-                        // フェンス(isFence)だけは柵として機能させるため衝突対象に含める
+                        const mesh = activeBlocks[`${x},${y},${z}`];
                         if (mesh && !mesh.userData.isWater && (!mesh.userData.isFurniture || mesh.userData.isFence)) {
                             if (pMinX < x + 0.5 && pMaxX > x - 0.5 && pMinY < y + 0.5 && pMaxY > y - 0.5 && pMinZ < z + 0.5 && pMaxZ > z - 0.5) return true;
                         }
@@ -2484,12 +2091,9 @@
             return false;
         }
         function findAnimalGroundY(px, pz, fromY) {
-            // 落下中に1フレームの移動量が大きくなった場合(処理落ち等)でも、
-            // 「今いる場所の少し上」から真下に地面(水・家具を除く固体ブロック)を探して
-            // その真上の高さを返すことで、動物が地面の中に埋まってしまうのを防ぐ。
             const startY = Math.ceil(fromY) + 1;
             for (let y = startY; y >= startY - 24; y--) {
-                const mesh = activeBlocks.get(`${Math.round(px)},${y},${Math.round(pz)}`);
+                const mesh = activeBlocks[`${Math.round(px)},${y},${Math.round(pz)}`];
                 if (mesh && !mesh.userData.isWater && (!mesh.userData.isFurniture || mesh.userData.isFence)) return y + 0.5;
             }
             return null;
@@ -2503,7 +2107,7 @@
             for (const key of currentQueue) {
                 const [x, y, z] = key.split(',').map(Number);
                 if (y < -15) { toRemove.push(key); continue; }
-                const currentMesh = activeBlocks.get(key);
+                const currentMesh = activeBlocks[key];
                 if (!currentMesh || !currentMesh.userData.isWater) continue;
                 if (currentMesh.userData.drainingTick !== undefined) {
                     currentMesh.userData.drainingTick--;
@@ -2513,7 +2117,7 @@
                         for (let d of dirs) {
                             if (d[1] === -1) continue;
                             const nKey = `${x + d[0]},${y + d[1]},${z + d[2]}`;
-                            const nMesh = activeBlocks.get(nKey);
+                            const nMesh = activeBlocks[nKey];
                             if (nMesh && nMesh.userData.isWater && nMesh.userData.drainingTick === undefined) {
                                 nMesh.userData.drainingTick = 2; triggers.push(nKey);
                             }
@@ -2523,13 +2127,8 @@
                 }
                 let level = currentMesh.userData.waterLevel;
                 if (level === undefined) level = 15;
-                // (以前はlevelが0まで下がった水が自然蒸発する仕様だったが、
-                //  囲われた水たまりが勝手に消えてしまうため廃止。水は壁を壊されるまで居座る。
-                //  level<=0でも下に支えがなければ普通に流れ落ちるし、横spreadは
-                //  spreadLevelが負になるので自然に止まる)
                 const bottomKey = `${x},${y-1},${z}`;
-                const bottomMesh = activeBlocks.get(bottomKey);
-
+                const bottomMesh = activeBlocks[bottomKey];
                 if (!bottomMesh) {
                     if (!toAddMap.has(bottomKey) || toAddMap.get(bottomKey).level < level) toAddMap.set(bottomKey, {x, y: y-1, z, level});
                 } else {
@@ -2539,7 +2138,7 @@
                         const dirs = [[1,0,0], [-1,0,0], [0,0,1], [0,0,-1]];
                         for (let d of dirs) {
                             const nKey = `${x+d[0]},${y},${z+d[2]}`;
-                            if (!activeBlocks.get(nKey)) {
+                            if (!activeBlocks[nKey]) {
                                 if (!toAddMap.has(nKey) || toAddMap.get(nKey).level < spreadLevel) toAddMap.set(nKey, {x: x+d[0], y, z: z+d[2], level: spreadLevel});
                             }
                         }
@@ -2548,7 +2147,7 @@
             }
             for (const key of toRemove) removeBlockMesh(key);
             for (const [key, item] of toAddMap.entries()) {
-                const existingMesh = activeBlocks.get(`${item.x},${item.y},${item.z}`);
+                const existingMesh = activeBlocks[`${item.x},${item.y},${item.z}`];
                 if (existingMesh && existingMesh.userData.isWater) {
                     if (existingMesh.userData.waterLevel < item.level) {
                         existingMesh.userData.waterLevel = item.level;
@@ -2563,14 +2162,10 @@
         function animate() {
             requestAnimationFrame(animate);
             const time = performance.now();
-            // チャンク生成などで1フレームの処理が重くなった直後でも、
-            // 物理演算が一気に大きく動いてすり抜け・埋まりが起きないよう経過時間の上限を設ける
             const delta = Math.min((time - prevTime) / 1000, 0.05);
             if (time - lastWaterTick > 200) {
                 processWaterTick(); lastWaterTick = time;
             }
-            // プレイヤーが新しいチャンクに入ったら周囲のチャンクをキューに追加し、
-            // 1フレームにつき1チャンクずつ生成することでカクつきを抑えながら地形を広げていく
             const curChunkX = Math.floor(playerGroup.position.x / CHUNK_SIZE);
             const curChunkZ = Math.floor(playerGroup.position.z / CHUNK_SIZE);
             if (curChunkX !== lastChunkX || curChunkZ !== lastChunkZ) {
@@ -2585,8 +2180,8 @@
             const pX = Math.floor(playerGroup.position.x + 0.5);
             const pY = Math.floor(playerGroup.position.y);
             const pZ = Math.floor(playerGroup.position.z + 0.5);
-            const currentBlock = activeBlocks.get(`${pX},${pY},${pZ}`);
-            const headBlock = activeBlocks.get(`${pX},${pY + 1},${pZ}`);
+            const currentBlock = activeBlocks[`${pX},${pY},${pZ}`];
+            const headBlock = activeBlocks[`${pX},${pY + 1},${pZ}`];
             isInWater = currentBlock && currentBlock.userData && currentBlock.userData.isWater;
             const isHeadInWater = headBlock && headBlock.userData && headBlock.userData.isWater;
             if (isHeadInWater) {
@@ -2598,23 +2193,16 @@
             }
             if (isLocked) {
                 yawGroup.rotation.y = cameraYaw; pitchGroup.rotation.x = cameraPitch; headGroup.rotation.x = cameraPitch;
-                // handlePointerActionと同じく、blockMeshesは常に最新の当たり判定メッシュ一覧を保持しているので
-                // 毎フレームのコピー・再構築([...blockMeshes]や動物/トロッコ/魚のforEach)は不要。
-                const checkTargets = blockMeshes;
+                let checkTargets = [...blockMeshes];
+                animals.forEach(a => a.children.forEach(c => { if(c.material === invisibleHitboxMat) checkTargets.push(c); }));
+            minecarts.forEach(m => m.children.forEach(c => { if(c.material === invisibleHitboxMat) checkTargets.push(c); }));
+            fishes.forEach(f => f.children.forEach(c => { if(c.material === invisibleHitboxMat) checkTargets.push(c); }));
                 raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
                 const intersects = raycaster.intersectObjects(checkTargets, false);
-
                 if (intersects.length > 0 && intersects[0].distance <= 8) {
                     const intersect = intersects[0];
-                    const instancedKey = getKeyFromInstancedHit(intersect);
-                    let p;
-                    if (instancedKey) {
-                        const [kx, ky, kz] = instancedKey.split(',').map(Number);
-                        p = { x: kx, y: ky, z: kz };
-                    } else {
-                        p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
+                    let p = intersect.object.parent && intersect.object.parent.isGroup && !intersect.object.parent.userData.isAnimal ?
                             intersect.object.parent.position.clone().add(intersect.object.position) : intersect.object.position;
-                    }
                     highlightMesh.position.copy(p); highlightMesh.visible = true;
                 } else highlightMesh.visible = false;
                 if (isSwinging) {
@@ -2627,30 +2215,21 @@
                     }
                 }
                 const currentSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-                if (currentRidingCart) {
-                    // トロッコに乗車中は下半身(脚)をトロッコの中に隠し、上半身だけが見えるようにする
-                    rightLegPivot.visible = false; leftLegPivot.visible = false;
-                    rightArmPivot.rotation.x = 0.3; leftArmPivot.rotation.x = 0.3;
-                    rightArmPivot.rotation.z = -0.15; leftArmPivot.rotation.z = 0.15;
-                } else if (canJump && !isInWater) {
-                    rightLegPivot.visible = true; leftLegPivot.visible = true;
+                if (canJump && !isInWater) {
                     if (currentSpeed > 2.0) {
                         const angle = Math.sin((time / 1000) * 12) * 0.8;
                         rightArmPivot.rotation.x = angle; leftArmPivot.rotation.x = -angle; rightLegPivot.rotation.x = -angle; leftLegPivot.rotation.x = angle;
                     } else { rightArmPivot.rotation.x = 0; leftArmPivot.rotation.x = 0; rightLegPivot.rotation.x = 0; leftLegPivot.rotation.x = 0; }
                     rightArmPivot.rotation.z = 0; leftArmPivot.rotation.z = 0;
                 } else {
-                    rightLegPivot.visible = true; leftLegPivot.visible = true;
                     rightArmPivot.rotation.x = 0.5; leftArmPivot.rotation.x = 0.5; rightArmPivot.rotation.z = -0.2; leftArmPivot.rotation.z = 0.2;
                     rightLegPivot.rotation.x = -0.2; leftLegPivot.rotation.x = 0.2;
                 }
                 if (currentRidingCart) {
-                    // トロッコに乗車中はプレイヤー自身の物理演算を止め、トロッコの位置に追従させる
                     updateMinecartRide(delta);
                 } else {
                     velocity.x -= velocity.x * 10.0 * delta;
                     velocity.z -= velocity.z * 10.0 * delta;
-
                     if (isInWater) {
                         velocity.x -= velocity.x * 5.0 * delta;
                         velocity.z -= velocity.z * 5.0 * delta;
@@ -2688,10 +2267,7 @@
                 document.getElementById('coordinates').innerText = `${Math.floor(playerGroup.position.x)}, ${Math.floor(playerGroup.position.y)}, ${Math.floor(playerGroup.position.z)}`;
             }
             const pPos = playerGroup.position;
-            // 以前は全ブロック(Object.values(activeBlocks))を毎フレーム走査していたが、
-            // ドアだけを保持するdoorMeshesを走査するだけで済むようにして負荷を削減している。
-            // (挙動・開閉判定のロジック自体は変更していない)
-            doorMeshes.forEach(mesh => {
+            Object.values(activeBlocks).forEach(mesh => {
                 if (mesh && mesh.userData && mesh.userData.isDoor) {
                     const doorPos = mesh.position.clone();
                     const distXZ = Math.sqrt(Math.pow(pPos.x - doorPos.x, 2) + Math.pow(pPos.z - doorPos.z, 2));
@@ -2707,8 +2283,6 @@
             });
             animals.forEach(animal => {
                 const data = animal.userData;
-                // 猫・犬はプレイヤーから10ブロック以上離れないよう、離れすぎたら追いかけてくる
-                // (isCat/isDogを持たない牛・羊はこれまで通りランダムに歩き回るだけ)
                 if (data.isCat || data.isDog) {
                     const toPlayerX = playerGroup.position.x - animal.position.x;
                     const toPlayerZ = playerGroup.position.z - animal.position.z;
@@ -2720,9 +2294,7 @@
                     }
                 }
                 data.walkTimer -= delta;
-
                 if (data.targetYaw === undefined) data.targetYaw = data.yaw;
-
                 if (data.walkTimer <= 0) {
                     data.isWalking = Math.random() > 0.4;
                     if (data.isWalking) {
@@ -2747,16 +2319,12 @@
                         data.velocity.y = 0;
                     }
                 }
-
                 if (data.isWalking) {
-                    // dataにspeedが無ければ従来通り0.3(牛はこれまで通りの速さのまま変化しない)
                     const speed = data.speed || 0.3;
                     const dx = Math.sin(animal.rotation.y) * speed * delta;
                     const dz = Math.cos(animal.rotation.y) * speed * delta;
-
                     pos.x += dx;
                     if (checkAnimalCollision(pos.x, pos.y, pos.z)) {
-                        // canStepUpを持つ動物(羊)だけ、頭上が空いていれば1ブロックの段差を乗り越える
                         if (data.canStepUp && !checkAnimalCollision(pos.x, pos.y + 1, pos.z)) {
                             pos.y += 1;
                         } else {
@@ -2765,7 +2333,6 @@
                             data.isWalking = false;
                         }
                     }
-
                     pos.z += dz;
                     if (checkAnimalCollision(pos.x, pos.y, pos.z)) {
                         if (data.canStepUp && !checkAnimalCollision(pos.x, pos.y + 1, pos.z)) {
@@ -2776,39 +2343,31 @@
                             data.isWalking = false;
                         }
                     }
-
                     const legAngle = Math.sin((time / 1000) * 3.0) * 0.25;
                     data.legs[0].rotation.x = legAngle; data.legs[1].rotation.x = -legAngle;
                     data.legs[2].rotation.x = -legAngle; data.legs[3].rotation.x = legAngle;
                 } else {
                     data.legs.forEach(leg => leg.rotation.x += (0 - leg.rotation.x) * 5.0 * delta);
                 }
-
                 animal.position.copy(pos);
-
-                // 猫・犬は、歩いていない(止まっている)時は常にプレイヤーの方を向くようにする
-                // (ランダムな徘徊の向き決定より後にここで上書きすることで、確実にプレイヤー方向を向かせる)
                 if ((data.isCat || data.isDog) && !data.isWalking) {
                     const toPlayerX = playerGroup.position.x - animal.position.x;
                     const toPlayerZ = playerGroup.position.z - animal.position.z;
                     data.targetYaw = Math.atan2(toPlayerX, toPlayerZ);
                 }
-
                 let yawDiff = data.targetYaw - data.yaw;
                 while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
                 while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
                 data.yaw += yawDiff * 1.5 * delta;
                 animal.rotation.y = data.yaw;
             });
-            // ==================== 熱帯魚(水の中だけを泳ぎ、水が無くなると消える) ====================
             if (fishes.length > 0) {
                 const fishToRemove = [];
                 fishes.forEach(fish => {
                     const data = fish.userData;
                     const curKey = `${Math.round(fish.position.x)},${Math.round(fish.position.y)},${Math.round(fish.position.z)}`;
-                    const curMesh = activeBlocks.get(curKey);
+                    const curMesh = activeBlocks[curKey];
                     if (!curMesh || !curMesh.userData.isWater) {
-                        // 今いる場所が水でなくなった(水が抜けた/水槽の外に出た)ので消える
                         fishToRemove.push(fish);
                         return;
                     }
@@ -2817,11 +2376,10 @@
                         data.wanderTimer = Math.random() * 2.5 + 1.5;
                         data.dir.set((Math.random() - 0.5), (Math.random() - 0.5) * 0.6, (Math.random() - 0.5)).normalize();
                     }
-                    // 次に進む先が水でなければ移動せず向きだけ変える(=水槽の壁やガラスの外には出られない)
                     const moveVec = data.dir.clone().multiplyScalar(data.speed * delta);
                     const nextPos = fish.position.clone().add(moveVec);
                     const nextKey = `${Math.round(nextPos.x)},${Math.round(nextPos.y)},${Math.round(nextPos.z)}`;
-                    const nextMesh = activeBlocks.get(nextKey);
+                    const nextMesh = activeBlocks[nextKey];
                     if (nextMesh && nextMesh.userData.isWater) {
                         fish.position.copy(nextPos);
                     } else {
@@ -2836,7 +2394,6 @@
                     scene.remove(fish);
                     const idx = fishes.indexOf(fish);
                     if (idx > -1) fishes.splice(idx, 1);
-                    removeFromBlockMeshes(fish.userData.hitboxMesh);
                 });
             }
             renderer.render(scene, camera); prevTime = time;
