@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minecraft風 3Dボクセルゲーム (完全版)</title>
+    <title>Masaki先生の３Dボクセルゲーム（実験版）</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
@@ -114,6 +114,36 @@
             background-color: #8b8b8b; color: #fff;
         }
         .cart-prompt-box button:hover { background-color: #a0a0a0; }
+        /* ==================== 設定ボタン(パスワードで昼/夜切替) ==================== */
+        #settings-button {
+            /* PC/タブレット共通で常時表示。右上のインベントリ等のボタン列(top:15px)や
+               画面下部のジャンプ/破壊/設置ボタン列と重ならない高さ(right側の中間あたり)に固定する */
+            position: absolute; top: 190px; right: 15px; width: 46px; height: 46px;
+            border-radius: 50%; border: 2px solid rgba(255,255,255,0.6);
+            background: rgba(0,0,0,0.4); color: #fff; font-size: 22px; display: flex;
+            justify-content: center; align-items: center; cursor: pointer; z-index: 13;
+            pointer-events: auto; -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        #settings-button:hover { background: rgba(0,0,0,0.6); }
+        #settings-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); z-index: 26;
+            display: none; justify-content: center; align-items: center; pointer-events: auto;
+        }
+        #settings-password-input {
+            font-family: 'Courier New', Courier, monospace; font-size: 20px; letter-spacing: 6px;
+            text-align: center; width: 140px; padding: 6px 8px; border: 2px inset #000; border-radius: 4px;
+        }
+        #settings-password-error { color: #b22222; font-size: 13px; font-weight: bold; margin-top: 8px; }
+        .settings-time-btn {
+            font-family: 'Courier New', Courier, monospace; font-size: 15px; font-weight: bold; cursor: pointer;
+            padding: 10px 18px; margin: 0 6px; border: 3px solid; border-color: #fff #555 #555 #fff;
+            background-color: #8b8b8b; color: #fff; border-radius: 4px;
+        }
+        .settings-time-btn:hover { background-color: #a0a0a0; }
+        .settings-time-btn.active {
+            background-color: #3d6e28; border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.7);
+        }
         /* ==================== モバイル(スマホ・iPad)操作用UI ==================== */
         /* PCのマウス/キーボード操作は一切変更せず、タッチデバイスの時だけJSでdisplay:blockにする */
         #mobile-controls {
@@ -138,7 +168,9 @@
             pointer-events: none;
         }
         #mobile-top-buttons {
-            position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; pointer-events: auto;
+            /* 座標表示(#info-panel)は左上に既にあるので、インベントリ/視点切替/リスポーンのボタン類は
+               重ならないよう右上に配置する */
+            position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; pointer-events: auto;
         }
         #mobile-action-buttons {
             /* ジャンプ/破壊/設置ボタンの列。ボタンを大きくした分、詰まって見えないようgapも広げる */
@@ -177,6 +209,28 @@
             <p>リスポーンしますか?</p>
             <button id="respawn-yes">はい</button>
             <button id="respawn-no">いいえ</button>
+        </div>
+    </div>
+    <div id="settings-button" title="設定">⚙</div>
+    <div id="settings-overlay">
+        <div class="cart-prompt-box" id="settings-password-box">
+            <p>設定を開くにはパスワードを入力してください</p>
+            <input type="password" id="settings-password-input" inputmode="numeric" autocomplete="off" maxlength="8">
+            <div id="settings-password-error" style="display:none;">パスワードが違います</div>
+            <div style="margin-top: 14px;">
+                <button id="settings-password-submit">決定</button>
+                <button id="settings-password-cancel">閉じる</button>
+            </div>
+        </div>
+        <div class="cart-prompt-box" id="settings-panel-box" style="display:none;">
+            <p>設定 - 時間帯</p>
+            <div id="settings-time-buttons">
+                <button id="settings-time-day" class="settings-time-btn">☀ 昼</button>
+                <button id="settings-time-night" class="settings-time-btn">🌙 夜</button>
+            </div>
+            <div style="margin-top: 14px;">
+                <button id="settings-close">閉じる</button>
+            </div>
         </div>
     </div>
     <div id="blocker">
@@ -797,7 +851,7 @@
             isLocked = (document.pointerLockElement === container || document.mozPointerLockElement === container);
             const blocker = document.getElementById('blocker');
             if (isLocked) blocker.style.display = 'none';
-            else if (!isInventoryOpen && !isCartPromptOpen && !isRespawnPromptOpen) blocker.style.display = 'flex';
+            else if (!isInventoryOpen && !isCartPromptOpen && !isRespawnPromptOpen && !isSettingsOpen) blocker.style.display = 'flex';
         }, false);
         document.addEventListener('mousemove', (event) => {
             if (!isLocked) return;
@@ -857,6 +911,7 @@
         document.addEventListener('keydown', (event) => {
             if (isCartPromptOpen) return;
             if (isRespawnPromptOpen) return;
+            if (isSettingsOpen) return;
             if (isInventoryOpen) {
                 const items = INVENTORY_DATA[currentInvTab];
                 if (event.code === 'KeyE') { toggleInventory(); return; }
@@ -1010,13 +1065,25 @@
         bindMobileButton('mobile-btn-jump', () => {
             if (currentRidingCart) { exitMinecart(); return; }
             moveUp = true;
-            if (canJump && !isFlying) { velocity.y += 10; canJump = false; }
+            // PC版のSpaceキー(2度押しで飛行モードのON/OFF)と同じ判定をタッチ版のジャンプボタンにも適用する。
+            // lastSpacePressはPC側と共有しているので、キーボードとタッチのどちらで連続入力しても
+            // 500ms以内なら「2度押し」とみなされる
+            const now = performance.now();
+            if (now - lastSpacePress < 500) {
+                isFlying = !isFlying;
+                if (isFlying) velocity.y = 0;
+                lastSpacePress = 0;
+            } else {
+                lastSpacePress = now;
+                if (canJump && !isFlying) { velocity.y += 10; canJump = false; }
+            }
         }, () => { moveUp = false; });
         bindMobileButton('mobile-btn-break', () => { handlePointerAction({ button: 0 }); });
         bindMobileButton('mobile-btn-place', () => { handlePointerAction({ button: 2 }); });
         bindMobileButton('mobile-btn-inventory', () => { toggleInventory(); });
         bindMobileButton('mobile-btn-view', () => { isThirdPerson = !isThirdPerson; updateCameraView(); });
         bindMobileButton('mobile-btn-respawn', () => { showRespawnPrompt(); });
+        bindMobileButton('settings-button', () => { openSettings(); });
         const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
         const invisibleHitboxMat = new THREE.MeshBasicMaterial({ visible: false });
         function updateRailOrientation(x, y, z) {
@@ -1761,6 +1828,67 @@
             hideRespawnPrompt();
             lockPointer();
         });
+        // ==================== 設定(パスワードで昼/夜切替) ====================
+        let isSettingsOpen = false;
+        let isNightMode = false;
+        const SETTINGS_PASSWORD = '5858';
+        const TIME_OF_DAY_PRESETS = {
+            day:   { sky: 0x87CEEB, fogNear: 20, fogFar: 60, ambientColor: 0xcccccc, ambientIntensity: 0.6, dirColor: 0xffffff, dirIntensity: 0.6 },
+            night: { sky: 0x0a0a24, fogNear: 12, fogFar: 40, ambientColor: 0x33395a, ambientIntensity: 0.28, dirColor: 0x8fa0d8, dirIntensity: 0.18 }
+        };
+        function applyTimeOfDay(night) {
+            isNightMode = night;
+            const preset = night ? TIME_OF_DAY_PRESETS.night : TIME_OF_DAY_PRESETS.day;
+            ambientLight.color.setHex(preset.ambientColor); ambientLight.intensity = preset.ambientIntensity;
+            dirLight.color.setHex(preset.dirColor); dirLight.intensity = preset.dirIntensity;
+            updateSettingsTimeButtons();
+        }
+        function updateSettingsTimeButtons() {
+            const dayBtn = document.getElementById('settings-time-day');
+            const nightBtn = document.getElementById('settings-time-night');
+            if (dayBtn) dayBtn.classList.toggle('active', !isNightMode);
+            if (nightBtn) nightBtn.classList.toggle('active', isNightMode);
+        }
+        function openSettings() {
+            if (isSettingsOpen || isInventoryOpen || isCartPromptOpen || isRespawnPromptOpen) return;
+            isSettingsOpen = true;
+            const input = document.getElementById('settings-password-input');
+            if (input) input.value = '';
+            document.getElementById('settings-password-error').style.display = 'none';
+            document.getElementById('settings-password-box').style.display = 'block';
+            document.getElementById('settings-panel-box').style.display = 'none';
+            document.getElementById('settings-overlay').style.display = 'flex';
+            document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+            if (document.exitPointerLock) document.exitPointerLock();
+            isLocked = false;
+            setTimeout(() => { if (input) input.focus(); }, 0);
+        }
+        function closeSettings() {
+            isSettingsOpen = false;
+            document.getElementById('settings-overlay').style.display = 'none';
+            lockPointer();
+        }
+        function trySubmitSettingsPassword() {
+            const input = document.getElementById('settings-password-input');
+            if (input && input.value === SETTINGS_PASSWORD) {
+                document.getElementById('settings-password-box').style.display = 'none';
+                document.getElementById('settings-panel-box').style.display = 'block';
+                document.getElementById('settings-password-error').style.display = 'none';
+                updateSettingsTimeButtons();
+            } else {
+                document.getElementById('settings-password-error').style.display = 'block';
+                if (input) { input.value = ''; input.focus(); }
+            }
+        }
+        document.getElementById('settings-button').addEventListener('click', openSettings);
+        document.getElementById('settings-password-submit').addEventListener('click', trySubmitSettingsPassword);
+        document.getElementById('settings-password-input').addEventListener('keydown', (event) => {
+            if (event.code === 'Enter') { event.preventDefault(); trySubmitSettingsPassword(); }
+        });
+        document.getElementById('settings-password-cancel').addEventListener('click', closeSettings);
+        document.getElementById('settings-close').addEventListener('click', closeSettings);
+        document.getElementById('settings-time-day').addEventListener('click', () => applyTimeOfDay(false));
+        document.getElementById('settings-time-night').addEventListener('click', () => applyTimeOfDay(true));
         let waterUpdateQueue = new Set();
         function updateWaterFaces(x, y, z, mesh) {
             if (!mesh || !mesh.userData.isWater) return;
@@ -2189,7 +2317,9 @@
                 scene.fog.color.setHex(0x0a3296); scene.fog.near = 1; scene.fog.far = 10; scene.background.setHex(0x0a3296);
             } else {
                 document.getElementById('underwater-overlay').style.display = 'none';
-                scene.fog.color.setHex(0x87CEEB); scene.fog.near = 20; scene.fog.far = 60; scene.background.setHex(0x87CEEB);
+                // 設定で選んだ昼/夜プリセットの空色・霧をここで反映する(水中でない通常時のみ)
+                const timePreset = isNightMode ? TIME_OF_DAY_PRESETS.night : TIME_OF_DAY_PRESETS.day;
+                scene.fog.color.setHex(timePreset.sky); scene.fog.near = timePreset.fogNear; scene.fog.far = timePreset.fogFar; scene.background.setHex(timePreset.sky);
             }
             if (isLocked) {
                 yawGroup.rotation.y = cameraYaw; pitchGroup.rotation.x = cameraPitch; headGroup.rotation.x = cameraPitch;
