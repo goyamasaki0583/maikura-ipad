@@ -75,6 +75,13 @@
         .inv-header { display: flex; justify-content: space-between; align-items: center; }
         .inv-title { font-size: 18px; font-weight: bold; color: #333; }
         .inv-item-name-box { font-size: 16px; color: #fff; background: #333; padding: 4px 10px; border-radius: 4px; min-width: 150px; text-align: center; border: 2px inset #000; }
+        .inv-close-btn {
+            width: 30px; height: 30px; border-radius: 50%; background-color: #b22222; color: #fff;
+            font-weight: bold; font-size: 15px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; border: 3px solid; border-color: #fff #555 #555 #fff; flex-shrink: 0;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+        .inv-close-btn:hover { background-color: #d32f2f; }
         .inv-grid {
             display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px;
             overflow-y: auto; align-content: start; min-height: 240px; max-height: 300px;
@@ -270,6 +277,7 @@
                 <div class="inv-header">
                     <div class="inv-title">アイテム一覧</div>
                     <div class="inv-item-name-box" id="inv-item-name">アイテム名</div>
+                    <div class="inv-close-btn" id="inv-close-btn" title="閉じる">✕</div>
                 </div>
                 <div class="inv-grid" id="inv-grid"></div>
                 <div style="font-size: 12px; color: #555; margin-top: 5px; text-align: center;">[十字キー]で選択 / [Enter]でホットバーに追加 / [E]で閉じる</div>
@@ -644,6 +652,9 @@
         const invGrid = document.getElementById('inv-grid');
         const invItemNameBox = document.getElementById('inv-item-name');
         const hotbarContainer = document.getElementById('hotbar-container');
+        // ホットバーでブロックを選択する操作が、その下でプレイ中のワールドに対する
+        // ブロック破壊(document全体で拾っているmousedown)にまで伝わってしまわないようにする
+        hotbarContainer.addEventListener('mousedown', (event) => { event.stopPropagation(); });
         const itemPopup = document.getElementById('item-popup');
         let popupTimeout;
         function showPopup(text) {
@@ -690,6 +701,9 @@
                 invOverlay.style.display = 'none'; lockPointer();
             }
         }
+        document.getElementById('inv-close-btn').addEventListener('click', () => {
+            if (isInventoryOpen) toggleInventory();
+        });
         function renderInventoryGrid() {
             const items = INVENTORY_DATA[currentInvTab];
             invGrid.innerHTML = '';
