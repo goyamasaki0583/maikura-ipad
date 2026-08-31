@@ -240,6 +240,7 @@
         <p class="blocker-pc-hint" style="font-size: 14px; color: #aaa;">[左クリック]: 破壊 | [右クリック]: 設置</p>
         <p class="blocker-pc-hint" style="font-size: 14px; color: #ffaa00;">[E]: インベントリを開く</p>
         <p id="blocker-touch-hint" style="display:none; margin-top: 20px; font-size: 14px; color: #aaa; line-height:1.6;">左下のスティックで移動<br>画面をドラッグで視点操作<br>右下のボタンで ジャンプ・破壊・設置</p>
+        <p id="blocker-disclaimer" style="margin-top: 24px; font-size: 12px; color: #999; max-width: 480px; line-height: 1.7; padding: 0 20px;">このサイトは、個人が運営する、マルチプレイ機能検証のための実験的なサイトです。特定の団体様・個人様に損害を与える意図は一切ございません。意図せずこのサイトにアクセスされた方は、恐れ入りますが退出していただきますようお願いいたします。</p>
     </div>
     <div id="ui-layer">
         <div id="info-panel">
@@ -1852,13 +1853,29 @@
         // ==================== 設定(パスワードで昼/夜切替) ====================
         let isSettingsOpen = false;
         let isNightMode = false;
+        // 自動昼夜サイクル用: null なら自動サイクルに従う。true/false なら設定画面で手動固定した状態(自動サイクルより優先)
+        let manualTimeOverride = null;
         const SETTINGS_PASSWORD = '5858';
         const TIME_OF_DAY_PRESETS = {
             day:   { sky: 0x87CEEB, fogNear: 20, fogFar: 60, ambientColor: 0xcccccc, ambientIntensity: 0.6, dirColor: 0xffffff, dirIntensity: 0.6 },
+            dusk:  { sky: 0xff9a5a, fogNear: 16, fogFar: 50, ambientColor: 0xffab73, ambientIntensity: 0.42, dirColor: 0xff8a50, dirIntensity: 0.35 },
             night: { sky: 0x0a0a24, fogNear: 12, fogFar: 40, ambientColor: 0x33395a, ambientIntensity: 0.28, dirColor: 0x8fa0d8, dirIntensity: 0.18 }
         };
+        // 20分を1周期として 昼(14分) → 夕方(1分) → 夜(5分) → 昼へ戻る、を自動で繰り返す。
+        // 毎フレーム performance.now() の余りを見るだけの軽い計算なので、動作が重くなることはない
+        const AUTO_CYCLE_DUSK_MS = 1 * 60 * 1000;
+        const AUTO_CYCLE_NIGHT_MS = 5 * 60 * 1000;
+        const AUTO_CYCLE_TOTAL_MS = 20 * 60 * 1000;
+        const AUTO_CYCLE_DAY_MS = AUTO_CYCLE_TOTAL_MS - AUTO_CYCLE_DUSK_MS - AUTO_CYCLE_NIGHT_MS;
+        function getAutoTimePreset() {
+            const elapsed = performance.now() % AUTO_CYCLE_TOTAL_MS;
+            if (elapsed < AUTO_CYCLE_DAY_MS) return TIME_OF_DAY_PRESETS.day;
+            if (elapsed < AUTO_CYCLE_DAY_MS + AUTO_CYCLE_DUSK_MS) return TIME_OF_DAY_PRESETS.dusk;
+            return TIME_OF_DAY_PRESETS.night;
+        }
         function applyTimeOfDay(night) {
             isNightMode = night;
+            manualTimeOverride = night; // 設定画面で手動選択したので、以後は自動サイクルより優先する
             const preset = night ? TIME_OF_DAY_PRESETS.night : TIME_OF_DAY_PRESETS.day;
             ambientLight.color.setHex(preset.ambientColor); ambientLight.intensity = preset.ambientIntensity;
             dirLight.color.setHex(preset.dirColor); dirLight.intensity = preset.dirIntensity;
@@ -2369,9 +2386,13 @@
                 scene.fog.color.setHex(0x0a3296); scene.fog.near = 1; scene.fog.far = 10; scene.background.setHex(0x0a3296);
             } else {
                 document.getElementById('underwater-overlay').style.display = 'none';
-                // 設定で選んだ昼/夜プリセットの空色・霧をここで反映する(水中でない通常時のみ)
-                const timePreset = isNightMode ? TIME_OF_DAY_PRESETS.night : TIME_OF_DAY_PRESETS.day;
+                // 設定で昼/夜を手動固定していればそれを、していなければ自動サイクルの現在の時間帯を反映する(水中でない通常時のみ)
+                const timePreset = manualTimeOverride !== null
+                    ? (manualTimeOverride ? TIME_OF_DAY_PRESETS.night : TIME_OF_DAY_PRESETS.day)
+                    : getAutoTimePreset();
                 scene.fog.color.setHex(timePreset.sky); scene.fog.near = timePreset.fogNear; scene.fog.far = timePreset.fogFar; scene.background.setHex(timePreset.sky);
+                ambientLight.color.setHex(timePreset.ambientColor); ambientLight.intensity = timePreset.ambientIntensity;
+                dirLight.color.setHex(timePreset.dirColor); dirLight.intensity = timePreset.dirIntensity;
             }
             if (isLocked) {
                 yawGroup.rotation.y = cameraYaw; pitchGroup.rotation.x = cameraPitch; headGroup.rotation.x = cameraPitch;
